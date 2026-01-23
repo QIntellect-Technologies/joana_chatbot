@@ -1,0 +1,78 @@
+{
+  "currency": "SAR",
+  "categories": [
+    {
+      "id": "burgers",
+      "name": { "en": "Burgers", "ar": "البرغر" },
+      "items": [
+        { "id": "chicken_burger", "name": { "en": "Chicken Burger", "ar": "برغر دجاج" }, "price": 9.50 },
+        { "id": "beef_burger", "name": { "en": "Beef Burger", "ar": "برغر لحم" }, "price": 9.50 },
+        { "id": "regular_zinger_burger", "name": { "en": "Regular Zinger Burger", "ar": "برغر زنجر عادي" }, "price": 13.50 },
+        { "id": "spicy_zinger_burger", "name": { "en": "Spicy Zinger Burger", "ar": "برغر زنجر حار" }, "price": 13.50 },
+        { "id": "crispy_burger", "name": { "en": "Crispy Burger", "ar": "برغر كرسبي" }, "price": 11.50 },
+        { "id": "spicy_tortilla_zinger", "name": { "en": "Spicy Tortilla Zinger", "ar": "تورتيا زنجر حار" }, "price": 14.50 },
+        { "id": "regular_tortilla_zinger", "name": { "en": "Regular Tortilla Zinger", "ar": "تورتيا زنجر عادي" }, "price": 14.50 },
+        { "id": "tortilla_chicken_jambo", "name": { "en": "Tortilla Chicken Jambo", "ar": "تورتيا دجاج جامبو" }, "price": 15.50 }
+      ]
+    },
+    {
+      "id": "sandwiches",
+      "name": { "en": "Sandwiches", "ar": "السندويشات" },
+      "items": [
+        { "id": "kibdah_sandwich", "name": { "en": "Sandwiches Kibdah", "ar": "ساندويتش كبدة" }, "price": 8.50 },
+        { "id": "egg_sandwich", "name": { "en": "Egg Sandwich", "ar": "ساندويتش بيض" }, "price": 6.00 },
+        { "id": "shashukah_sandwich", "name": { "en": "Sandwiches Shashukah", "ar": "ساندويتش شكشوكة" }, "price": 8.50 },
+        { "id": "chicken_sandwich", "name": { "en": "Chicken Sandwich", "ar": "ساندويتش دجاج" }, "price": 8.50 },
+        { "id": "kudu_chicken_sandwich", "name": { "en": "Kudu Chicken Sandwich", "ar": "كودو دجاج" }, "price": 15.50 },
+        { "id": "kabab_chicken_jambo", "name": { "en": "Kabab Chicken Jambo", "ar": "كباب دجاج جامبو" }, "price": 15.50 },
+        { "id": "hot_dog_jambo", "name": { "en": "Hot Dog Jambo", "ar": "هوت دوغ جامبو" }, "price": 10.50 }
+      ]
+    },
+    {
+      "id": "sides",
+      "name": { "en": "Sides", "ar": "الأطباق الجانبية" },
+      "items": [
+        { "id": "sweet_potato", "name": { "en": "Sweet Potato", "ar": "بطاطس حلوة" }, "price": 8.00 },
+        { "id": "sweet_corn", "name": { "en": "Sweet Corn", "ar": "ذرة حلوة" }, "price": 8.00 },
+        { "id": "french_fries", "name": { "en": "French Fries", "ar": "بطاطس مقلية" }, "price": 5.00 },
+        { "id": "potato_crispy", "name": { "en": "Potato Crispy", "ar": "بطاطس كرسبي" }, "price": 5.00 },
+        { "id": "corn_dog", "name": { "en": "Corn Dog 203", "ar": "كورندوغ" }, "price": 9.00 },
+        { "id": "chicken_nuggets", "name": { "en": "Chicken Nuggets", "ar": "قطع دجاج" }, "price": 9.00 },
+        { "id": "onion_rings", "name": { "en": "Onion Rings", "ar": "حلقات البصل" }, "price": 8.00 },
+        { "id": "chicken_popcorn", "name": { "en": "Chicken Popcorn", "ar": "بوفك دجاج" }, "price": 9.00 },
+        { "id": "samosa_falafel", "name": { "en": "Samosa Falafel", "ar": "فلافل سمبوسة" }, "price": 8.00 }
+      ]
+    },
+    {
+      "id": "drinks",
+      "name": { "en": "Drinks", "ar": "المشروبات" },
+      "items": [
+        { "id": "pepsi", "name": { "en": "Pepsi", "ar": "بيبسي" }, "price": 2.50 },
+        { "id": "tea", "name": { "en": "Tea", "ar": "شاي" }, "price": 1.50 },
+        { "id": "coffee", "name": { "en": "Coffee", "ar": "قهوة" }, "price": 2.00 },
+        { "id": "orange_juice", "name": { "en": "Orange Juice", "ar": "عصير برتقال" }, "price": 3.00 },
+        { "id": "slash_juice", "name": { "en": "Slash Juice", "ar": "عصير سلاش" }, "price": 3.50 },
+        { "id": "cocktail_juice", "name": { "en": "Cocktail Juice", "ar": "عصير كوكتيل" }, "price": 3.50 },
+        { "id": "rabia_juice", "name": { "en": "Rabia Juice", "ar": "عصير ربيع" }, "price": 2.50 }
+      ]
+    },
+    {
+      "id": "meals",
+      "name": { "en": "Meals", "ar": "الوجبات" },
+      "items": [
+        { "id": "chicken_burger_meal", "name": { "en": "Chicken Burger Meal", "ar": "وجبة برغر دجاج" }, "price": 14.50 },
+        { "id": "beef_burger_meal", "name": { "en": "Beef Burger Meal", "ar": "وجبة برغر لحم" }, "price": 14.50 },
+        { "id": "spicy_zinger_meal", "name": { "en": "Spicy Zinger Burger Meal", "ar": "وجبة زنجر حار" }, "price": 19.50 },
+        { "id": "regular_zinger_meal", "name": { "en": "Regular Zinger Burger Meal", "ar": "وجبة زنجر عادي" }, "price": 19.50 },
+        { "id": "crispy_burger_meal", "name": { "en": "Crispy Burger Meal", "ar": "وجبة برغر كرسبي" }, "price": 19.50 },
+        { "id": "spicy_tortilla_zinger_meal", "name": { "en": "Spicy Tortilla Zinger Meal", "ar": "وجبة تورتيلا زنجر حار" }, "price": 17.50 },
+        { "id": "regular_tortilla_zinger_meal", "name": { "en": "Regular Tortilla Zinger Meal", "ar": "وجبة تورتيلا زنجر عادي" }, "price": 15.50 },
+        { "id": "tortilla_chicken_meal", "name": { "en": "Tortilla Chicken Meal", "ar": "وجبة تورتيلا دجاج" }, "price": 15.50 },
+        { "id": "kabab_chicken_meal", "name": { "en": "Kabab Chicken Meal", "ar": "وجبة كباب دجاج" }, "price": 18.50 },
+        { "id": "hot_dog_meal", "name": { "en": "Hot Dog Meal", "ar": "وجبة هوت دوغ" }, "price": 15.50 },
+        { "id": "spicy_chicken_barosted", "name": { "en": "Spicy Chicken Barosted Meal", "ar": "وجبة دجاج باروستد حار" }, "price": 18.50 },
+        { "id": "chicken_nugget_meal", "name": { "en": "Chicken Nuggets Meal", "ar": "وجبة دجاج ناجتس" }, "price": 15.50 }
+      ]
+    }
+  ]
+}

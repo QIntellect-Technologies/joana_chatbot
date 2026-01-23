@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Joana Fast Food Assistant</title>
+
+    <!-- Use Flask url_for so static path works on cPanel (/joana_chatbot/static/...) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+
+  <body>
+    <div class="page-wrapper">
+      <!-- Header -->
+      <header>
+        <h1>Joana Fast Food Assistant</h1>
+        <p>Welcome! Type or speak your order below 🎤</p>
+        <p style="font-size: 0.85em; color: #6d4c41; margin-top: 5px;">
+          💡 Voice tip: Say "two burgers and four coffees" - numbers convert automatically!<br>
+          نصيحة صوتية: قل "برجران وأربعة قهوة" - تحويل الأرقام تلقائياً!
+        </p>
+      </header>
+
+      <!-- Chat Section -->
+      <div class="chat-box" id="chat-box"></div>
+
+      <!-- Input Area -->
+      <div class="input-area">
+        <input
+          id="msg"
+          name="message"
+          placeholder="Type your message here..."
+          autocomplete="off"
+        />
+        <button id="send">Send</button>
+        <!-- Fixed emoji encoding -->
+        <button id="mic" title="Speak in English or Arabic">🎤</button>
+      </div>
+
+      <!-- Footer -->
+      <footer>
+        &copy; 2025 <strong>Joana Fast Food</strong> | Powered by QIntellect Technologies
+      </footer>
+    </div>
+
+    <!-- Also use url_for for JS -->
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+  </body>
+</html>

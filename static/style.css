@@ -1,0 +1,180 @@
+/* 🌟 Joana Fast Food Chatbot – Centered Clean Design */
+
+body {
+  font-family: 'Poppins', 'Cairo', sans-serif;
+  background: linear-gradient(to bottom right, #fffaf0, #ffe0b2);
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.page-wrapper{
+  width: 38%;
+}
+
+/* Header */
+header {
+  text-align: center;
+  margin-top: 30px;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #3e2723;
+}
+
+header p {
+  margin: 5px 0 20px;
+  color: #6d4c41;
+  overflow-wrap:normal;
+}
+
+/* Chat Box */
+.chat-box {
+  width: 100%;
+  max-width: 900px;
+  height: 500px;
+  overflow-y: auto;
+  padding: 10px;
+  border: 1px solid #f5c16c;
+  border-radius: 12px;
+  background-color: #fff8e1;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  scroll-behavior: smooth;
+  margin: 0 auto 15px;
+}
+
+/* Message Styles */
+.user-msg, .bot-msg {
+  margin: 6px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  max-width: 80%;
+  line-height: 1.5;
+  font-size: 16px;
+  word-wrap: break-word;
+}
+
+.user-msg {
+  background: #d4f8d4;
+  align-self: flex-end;
+  border-bottom-right-radius: 2px;
+  color: #1b5e20;
+}
+
+.bot-msg {
+  background: #ffffff;
+  border: 1px solid #ffe0b2;
+  align-self: flex-start;
+  border-bottom-left-radius: 2px;
+  color: #4e342e;
+}
+
+/* Menu Image */
+.menu-img {
+  width: 300px;
+  border-radius: 8px;
+  margin-top: 8px;
+  border: 1px solid #ffe0b2;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Input Area */
+.input-area {
+  width: 190%;
+  max-width: 600px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0 auto 20px;
+  padding: 10px;
+  background: #fff3e0;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* Input Field */
+#msg {
+  flex: 1;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 1px solid #e0a96d;
+  outline: none;
+  transition: 0.2s;
+}
+
+#msg:focus {
+  border-color: #ff9800;
+  box-shadow: 0 0 6px #ffb74d;
+}
+
+/* Buttons */
+#send, #mic {
+  padding: 10px 15px;
+  margin-left: 8px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 15px;
+  color: white;
+  transition: background 0.3s ease;
+}
+
+#send {
+  background-color: #4CAF50;
+}
+#send:hover {
+  background-color: #388e3c;
+}
+
+#mic {
+  background-color: #f44336;
+}
+#mic:hover {
+  background-color: #d32f2f;
+}
+
+/* Mic Recording Animation */
+#mic.recording {
+  animation: pulse 1s infinite;
+  background-color: #e53935;
+}
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  font-size: 0.9rem;
+  color: #5d4037;
+  margin-bottom: 10px;
+}
+
+/* RTL Support for Arabic */
+body:lang(ar),
+html[lang="ar"] {
+  direction: rtl;
+  text-align: right;
+}
+
+
+body:lang(ar) .user-msg {
+  align-self: flex-start;
+  background: #d1ecf1;
+  color: #004085;
+}
+
+body:lang(ar) .bot-msg {
+  align-self: flex-end;
+}

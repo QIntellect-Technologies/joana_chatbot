@@ -1,0 +1,2679 @@
+{
+  "version": "2.0",
+  "created_at": "2026-01-02T10:34:09.431148Z",
+  "default_lang": "en",
+  "notes": "Restaurant ordering FAQ intents with dynamic templates. Use placeholders like {item_name}, {price}, etc. Designed to answer questions during button flow without altering order state.",
+  "intents": [
+    {
+      "id": "price_single_item",
+      "tags": [
+        "price",
+        "menu",
+        "item",
+        "cost"
+      ],
+      "patterns": [
+        {
+          "lang": "en",
+          "text": "What is the price of {item_name}?"
+        },
+        {
+          "lang": "en",
+          "text": "How much is {item_name}?"
+        },
+        {
+          "lang": "en",
+          "text": "Price for {item_name} please"
+        },
+        {
+          "lang": "en",
+          "text": "Tell me {item_name} price"
+        },
+        {
+          "lang": "en",
+          "text": "How much does {item_name} cost?"
+        },
+        {
+          "lang": "en",
+          "text": "What's the cost of {item_name}?"
+        },
+        {
+          "lang": "en",
+          "text": "Can you check price of {item_name}?"
+        },
+        {
+          "lang": "en",
+          "text": "How much for one {item_name}?"
+        },
+        {
+          "lang": "en",
+          "text": "How much is the {item_name} alone?"
+        },
+        {
+          "lang": "en",
+          "text": "How much is {item_name} without meal?"
+        },
+        {
+          "lang": "ar",
+          "text": "كم سعر {item_name}؟"
+        },
+        {
+          "lang": "ar",
+          "text": "سعر {item_name} كم؟"
+        },
+        {
+          "lang": "ar",
+          "text": "ابغى سعر {item_name}"
+        },
+        {
+          "lang": "ar",
+          "text": "بكم {item_name}؟"
+        },
+        {
+          "lang": "ar",
+          "text": "وش سعر {item_name}؟"
+        },
+        {
+          "lang": "ar",
+          "text": "كم تكلفة {item_name}؟"
+        },
+        {
+          "lang": "ar",
+          "text": "قدر سعر {item_name}"
+        },
+        {
+          "lang": "ar",
+          "text": "كم سعر حبة {item_name}؟"
+        },
+        {
+          "lang": "ar",
+          "text": "سعر {item_name} بدون وجبة كم؟"
+        },
+        {
+          "lang": "ar",
+          "text": "سعر {item_name} لوحده كم؟"
+        },
+        {
+          "lang": "ru",
+          "text": "{item_name} ka rate kya hai?"
+        },
+        {
+          "lang": "ru",
+          "text": "{item_name} kitne ka hai?"
+        },
+        {
+          "lang": "ru",
+          "text": "{item_name} price bata do"
+        },
+        {
+          "lang": "ru",
+          "text": "sirf {item_name} ki qeemat?"
+        },
+        {
+          "lang": "ru",
+          "text": "{item_name} without meal kitna?"
+        }
+      ],
+      "answer": {
+        "en": "Price of **{item_name}** is **{price} SAR**.\n{size_note}{spice_note}\nWould you like to add it to your order?",
+        "ar": "سعر **{item_name}** هو **{price} ريال**.\n{size_note}{spice_note}\nهل تريد إضافته إلى الطلب؟"
+      },
+      "response_type": "dynamic",
+      "slots": {
+        "item_name": {
+          "type": "string",
+          "required": true
+        },
+        "branch_id": {
+          "type": "string",
+          "required": false
+        }
+      }
+    },
+    {
+      "id": "price_meal_vs_sandwich",
+      "tags": [
+        "price",
+        "meal",
+        "compare"
+      ],
+      "patterns": [
+        {
+          "lang": "en",
+          "text": "Price of {item_name} meal?"
+        },
+        {
+          "lang": "en",
+          "text": "How much is {item_name} meal?"
+        },
+        {
+          "lang": "en",
+          "text": "How much is {item_name} sandwich only?"
+        },
+        {
+          "lang": "en",
+          "text": "What's the price difference between {item_name} meal and sandwich?"
+        },
+        {
+          "lang": "en",
+          "text": "Give me both prices for {item_name} (meal and sandwich)"
+        },
+        {
+          "lang": "ar",
+          "text": "كم سعر وجبة {item_name}؟"
+        },
+        {
+          "lang": "ar",
+          "text": "سعر وجبة {item_name} كم؟"
+        },
+        {
+          "lang": "ar",
+          "text": "كم سعر {item_name} بدون وجبة؟"
+        },
+        {
+          "lang": "ar",
+          "text": "وش الفرق بالسعر بين وجبة {item_name} والساندويتش؟"
+        },
+        {
+          "lang": "ar",
+          "text": "اعطني السعرين لـ {item_name}: وجبة وساندويتش"
+        },
+        {
+          "lang": "ru",
+          "text": "{item_name} meal kitne ka?"
+        },
+        {
+          "lang": "ru",
+          "text": "{item_name} sandwich only kitna?"
+        },
+        {
+          "lang": "ru",
+          "text": "{item_name} meal aur sandwich dono price?"
+        }
+      ],
+      "answer": {
+        "en": "Meal price **{meal_price} SAR**, sandwich-only **{single_price} SAR**.\nWould you like meal or sandwich only?",
+        "ar": "سعر الوجبة **{meal_price} ريال**، والسندويتش فقط **{single_price} ريال**.\nتريد وجبة ولا سندويتش فقط؟"
+      },
+      "response_type": "dynamic",
+      "slots": {
+        "item_name": {
+          "type": "string",
+          "required": true
+        },
+        "branch_id": {
+          "type": "string",
+          "required": false
+        }
+      }
+    },
+    {
+      "id": "list_categories",
+      "tags": [
+        "menu",
+        "categories",
+        "browse"
+      ],
+      "patterns": [
+        {
+          "lang": "en",
+          "text": "Show me the menu categories"
+        },
+        {
+          "lang": "en",
+          "text": "What categories do you have?"
+        },
+        {
+          "lang": "en",
+          "text": "Menu categories please"
+        },
+        {
+          "lang": "en",
+          "text": "What can I order?"
+        },
+        {
+          "lang": "en",
+          "text": "Show menu"
+        },
+        {
+          "lang": "ar",
+          "text": "اعرض أقسام المنيو"
+        },
+        {
+          "lang": "ar",
+          "text": "وش الأقسام اللي عندكم؟"
+        },
+        {
+          "lang": "ar",
+          "text": "أقسام المنيو لو سمحت"
+        },
+        {
+          "lang": "ar",
+          "text": "ايش اقدر اطلب؟"
+        },
+        {
+          "lang": "ar",
+          "text": "اعرض المنيو"
+        },
+        {
+          "lang": "ru",
+          "text": "menu categories batao"
+        },
+        {
+          "lang": "ru",
+          "text": "kya kya categories hain?"
+        },
+        {
+          "lang": "ru",
+          "text": "menu dikhao"
+        }
+      ],
+      "answer": {
+        "en": "Here are our categories: {categories_list}. Which one do you want?",
+        "ar": "هذه أقسام المنيو: {categories_list}. أي قسم تريد؟"
+      },
+      "response_type": "dynamic",
+      "slots": {
+        "branch_id": {
+          "type": "string",
+          "required": false
+        }
+      }
+    },
+    {
+      "id": "item_availability",
+      "tags": [
+        "availability",
+        "stock"
+      ],
+      "patterns": [
+        {
+          "lang": "en",
+          "text": "Is {item_name} available?"
+        },
+        {
+          "lang": "en",
+          "text": "Do you have {item_name} right now?"
+        },
+        {
+          "lang": "en",
+          "text": "Is {item_name} in stock?"
+        },
+        {
+          "lang": "en",
+          "text": "Can I order {item_name} today?"
+        },
+        {
+          "lang": "ar",
+          "text": "هل {item_name} متوفر؟"
+        },
+        {
+          "lang": "ar",
+          "text": "عندكم {item_name} الآن؟"
+        },
+        {
+          "lang": "ar",
+          "text": "هل {item_name} موجود؟"
+        },
+        {
+          "lang": "ar",
+          "text": "اقدر اطلب {item_name} اليوم؟"
+        },
+        {
+          "lang": "ru",
+          "text": "{item_name} available hai?"
+        },
+        {
+          "lang": "ru",
+          "text": "{item_name} mil jayega?"
+        },
+        {
+          "lang": "ru",
+          "text": "aaj {item_name} hai?"
+        }
+      ],
+      "answer": {
+        "en": "{item_name} is **{availability_status}** for {branch_name}.",
+        "ar": "{item_name} **{availability_status_ar}** في فرع {branch_name}."
+      },
+      "response_type": "dynamic",
+      "slots": {
+        "item_name": {
+          "type": "string",
+          "required": true
+        },
+        "branch_id": {
+          "type": "string",
+          "required": false
+        }
+      }
+    },
+    {
+      "id": "branch_hours",
+      "tags": [
+        "hours",
+        "timing",
+        "branch"
+      ],
+      "patterns": [
+        {
+          "lang": "en",
+          "text": "What are your timings?"
+        },
+        {
+          "lang": "en",
+          "text": "When do you open?"
+        },
+        {
+          "lang": "en",
+          "text": "When do you close?"
+        },
+        {
+          "lang": "en",
+          "text": "Working hours for {branch_name}?"
+        },
+        {
+          "lang": "en",
+          "text": "{branch_name} timings please"
+        },
+        {
+          "lang": "en",
+          "text": "Are you open now?"
+        },
+        {
+          "lang": "ar",
+          "text": "وش أوقات الدوام؟"
+        },
+        {
+          "lang": "ar",
+          "text": "متى تفتحون؟"
+        },
+        {
+          "lang": "ar",
+          "text": "متى تقفلون؟"
+        },
+        {
+          "lang": "ar",
+          "text": "أوقات دوام فرع {branch_name}؟"
+        },
+        {
+          "lang": "ar",
+          "text": "دوام {branch_name} لو سمحت"
+        },
+        {
+          "lang": "ar",
+          "text": "هل أنتم فاتحين الآن؟"
+        },
+        {
+          "lang": "ru",
+          "text": "timing kya hai?"
+        },
+        {
+          "lang": "ru",
+          "text": "kab open hota hai?"
+        },
+        {
+          "lang": "ru",
+          "text": "kab close hota hai?"
+        },
+        {
+          "lang": "ru",
+          "text": "abhi open ho?"
+        }
+      ],
+      "answer": {
+        "en": "{branch_name} hours: **{open_time}–{close_time}**. Today status: **{open_status}**.",
+        "ar": "دوام {branch_name}: **{open_time}–{close_time}**. حالة اليوم: **{open_status_ar}**."
+      },
+      "response_type": "dynamic",
+      "slots": {
+        "branch_id": {
+          "type": "string",
+          "required": false
+        },
+        "branch_name": {
+          "type": "string",
+          "required": false
+        }
+      }
+    },
+    {
+      "id": "delivery_fee_area",
+      "tags": [
+        "delivery",
+        "fee",
+        "area"
+      ],
+      "patterns": [
+        {
+          "lang": "en",
+          "text": "Do you deliver to {area_name}?"
+        },
+        {
+          "lang": "en",
+          "text": "Delivery available in {area_name}?"
+        },
+        {
+          "lang": "en",
+          "text": "What's the delivery fee for {area_name}?"
+        },
+        {
+          "lang": "en",
+          "text": "How much delivery charges?"
+        },
+        {
+          "lang": "en",
+          "text": "Is delivery free?"
+        },
+        {
+          "lang": "ar",
+          "text": "توصلون إلى {area_name}؟"
+        },
+        {
+          "lang": "ar",
+          "text": "هل التوصيل متاح في {area_name}؟"
+        },
+        {
+          "lang": "ar",
+          "text": "كم رسوم التوصيل لـ {area_name}؟"
+        },
+        {
+          "lang": "ar",
+          "text": "كم قيمة التوصيل؟"
+        },
+        {
+          "lang": "ar",
+          "text": "هل التوصيل مجاني؟"
+        },
+        {
+          "lang": "ru",
+          "text": "{area_name} me delivery hai?"
+        },
+        {
+          "lang": "ru",
+          "text": "delivery fee kitni hai?"
+        },
+        {
+          "lang": "ru",
+          "text": "delivery free hai?"
+        }
+      ],
+      "answer": {
+        "en": "Delivery to **{area_name}**: **{delivery_status}**. Fee: **{delivery_fee} SAR** (may vary by distance).",
+        "ar": "التوصيل إلى **{area_name}**: **{delivery_status_ar}**. الرسوم: **{delivery_fee} ريال** (قد تختلف حسب المسافة)."
+      },
+      "response_type": "dynamic",
+      "slots": {
+        "area_name": {
+          "type": "string",
+          "required": true
+        },
+        "branch_id": {
+          "type": "string",
+          "required": false
+        }
+      }
+    },
+    {
+      "id": "minimum_order",
+      "tags": [
+        "delivery",
+        "minimum",
+        "policy"
+      ],
+      "patterns": [
+        {
+          "lang": "en",
+          "text": "What is the minimum order for delivery?"
+        },
+        {
+          "lang": "en",
+          "text": "Minimum order amount?"
+        },
+        {
+          "lang": "en",
+          "text": "Do you have minimum for delivery?"
+        },
+        {
+          "lang": "en",
+          "text": "Can I order just one item for delivery?"
+        },
+        {
+          "lang": "ar",
+          "text": "كم الحد الأدنى للطلب للتوصيل؟"
+        },
+        {
+          "lang": "ar",
+          "text": "الحد الأدنى للطلب؟"
+        },
+        {
+          "lang": "ar",
+          "text": "هل يوجد حد أدنى للتوصيل؟"
+        },
+        {
+          "lang": "ar",
+          "text": "اقدر اطلب شيء واحد للتوصيل؟"
+        },
+        {
+          "lang": "ru",
+          "text": "minimum order kitna hai?"
+        },
+        {
+          "lang": "ru",
+          "text": "delivery ke liye minimum?"
+        },
+        {
+          "lang": "ru",
+          "text": "sirf 1 item delivery ho jayegi?"
+        }
+      ],
+      "answer": {
+        "en": "Minimum order for delivery is **{min_order} SAR**.",
+        "ar": "الحد الأدنى للتوصيل هو **{min_order} ريال**."
+      },
+      "response_type": "dynamic",
+      "slots": {
+        "branch_id": {
+          "type": "string",
+          "required": false
+        }
+      }
+    },
+    {
+      "id": "payment_methods",
+      "tags": [
+        "payment",
+        "cash",
+        "online"
+      ],
+      "patterns": [
+        {
+          "lang": "en",
+          "text": "What payment methods do you accept?"
+        },
+        {
+          "lang": "en",
+          "text": "Cash on delivery available?"
+        },
+        {
+          "lang": "en",
+          "text": "Can I pay by card?"
+        },
+        {
+          "lang": "en",
+          "text": "Do you have online payment?"
+        },
+        {
+          "lang": "ar",
+          "text": "ما طرق الدفع المتاحة؟"
+        },
+        {
+          "lang": "ar",
+          "text": "هل يوجد دفع عند الاستلام؟"
+        },
+        {
+          "lang": "ar",
+          "text": "اقدر ادفع بالبطاقة؟"
+        },
+        {
+          "lang": "ar",
+          "text": "هل يوجد دفع أونلاين؟"
+        },
+        {
+          "lang": "ru",
+          "text": "payment options kya hain?"
+        },
+        {
+          "lang": "ru",
+          "text": "cash on delivery hai?"
+        },
+        {
+          "lang": "ru",
+          "text": "card pe pay kar sakte?"
+        }
+      ],
+      "answer": {
+        "en": "Payment options: {payment_methods}. Which one do you prefer?",
+        "ar": "طرق الدفع: {payment_methods}. أي طريقة تفضل؟"
+      },
+      "response_type": "dynamic"
+    },
+    {
+      "id": "spice_options",
+      "tags": [
+        "spice",
+        "non_spice"
+      ],
+      "patterns": [
+        {
+          "lang": "en",
+          "text": "Can I make it non spicy?"
+        },
+        {
+          "lang": "en",
+          "text": "Do you have spicy option?"
+        },
+        {
+          "lang": "en",
+          "text": "Make it spicy"
+        },
+        {
+          "lang": "en",
+          "text": "No spice please"
+        },
+        {
+          "lang": "en",
+          "text": "Mild option available?"
+        },
+        {
+          "lang": "ar",
+          "text": "ممكن بدون حار؟"
+        },
+        {
+          "lang": "ar",
+          "text": "هل يوجد خيار حار؟"
+        },
+        {
+          "lang": "ar",
+          "text": "خليه حار"
+        },
+        {
+          "lang": "ar",
+          "text": "بدون حار لو سمحت"
+        },
+        {
+          "lang": "ar",
+          "text": "هل يوجد خيار خفيف؟"
+        },
+        {
+          "lang": "ru",
+          "text": "non spicy kar do"
+        },
+        {
+          "lang": "ru",
+          "text": "spicy option hai?"
+        },
+        {
+          "lang": "ru",
+          "text": "mild hai?"
+        }
+      ],
+      "answer": {
+        "en": "Sure. Choose: **Spicy / Non-spicy**. For {item_name}, available: **{spice_supported}**.",
+        "ar": "تمام. اختر: **حار / غير حار**. لـ {item_name} المتاح: **{spice_supported_ar}**."
+      },
+      "response_type": "dynamic",
+      "slots": {
+        "item_name": {
+          "type": "string",
+          "required": false
+        }
+      }
+    },
+    {
+      "id": "addons_extras",
+      "tags": [
+        "addons",
+        "extras",
+        "sauces"
+      ],
+      "patterns": [
+        {
+          "lang": "en",
+          "text": "What extras can I add?"
+        },
+        {
+          "lang": "en",
+          "text": "Any add-ons?"
+        },
+        {
+          "lang": "en",
+          "text": "Extra cheese available?"
+        },
+        {
+          "lang": "en",
+          "text": "Add fries"
+        },
+        {
+          "lang": "en",
+          "text": "Add drink"
+        },
+        {
+          "lang": "ar",
+          "text": "وش الإضافات المتاحة؟"
+        },
+        {
+          "lang": "ar",
+          "text": "هل يوجد إضافات؟"
+        },
+        {
+          "lang": "ar",
+          "text": "هل يوجد جبنة إضافية؟"
+        },
+        {
+          "lang": "ar",
+          "text": "أضف بطاطس"
+        },
+        {
+          "lang": "ar",
+          "text": "أضف مشروب"
+        },
+        {
+          "lang": "ru",
+          "text": "extras kya hain?"
+        },
+        {
+          "lang": "ru",
+          "text": "extra cheese milegi?"
+        },
+        {
+          "lang": "ru",
+          "text": "fries add karo"
+        },
+        {
+          "lang": "ru",
+          "text": "drink add karo"
+        }
+      ],
+      "answer": {
+        "en": "Available add-ons: {addons_list}. Tell me what you want to add.",
+        "ar": "الإضافات المتاحة: {addons_list}. قل لي ماذا تريد أن تضيف."
+      },
+      "response_type": "dynamic"
+    },
+    {
+      "id": "nutrition_allergens",
+      "tags": [
+        "nutrition",
+        "allergens",
+        "calories"
+      ],
+      "patterns": [
+        {
+          "lang": "en",
+          "text": "How many calories in {item_name}?"
+        },
+        {
+          "lang": "en",
+          "text": "Does {item_name} have nuts?"
+        },
+        {
+          "lang": "en",
+          "text": "Is {item_name} gluten free?"
+        },
+        {
+          "lang": "en",
+          "text": "Any allergens in {item_name}?"
+        },
+        {
+          "lang": "ar",
+          "text": "كم سعرات {item_name}؟"
+        },
+        {
+          "lang": "ar",
+          "text": "هل {item_name} فيه مكسرات؟"
+        },
+        {
+          "lang": "ar",
+          "text": "هل {item_name} خالي من الجلوتين؟"
+        },
+        {
+          "lang": "ar",
+          "text": "هل يوجد مسببات حساسية في {item_name}؟"
+        },
+        {
+          "lang": "ru",
+          "text": "{item_name} me calories kitni?"
+        },
+        {
+          "lang": "ru",
+          "text": "{item_name} me nuts hain?"
+        },
+        {
+          "lang": "ru",
+          "text": "gluten free hai?"
+        }
+      ],
+      "answer": {
+        "en": "Nutrition/allergen info for {item_name}: {nutrition_info}. (If you have allergies, tell us what to avoid.)",
+        "ar": "معلومات التغذية/الحساسية لـ {item_name}: {nutrition_info}. (إذا لديك حساسية، أخبرنا ماذا نتجنب.)"
+      },
+      "response_type": "dynamic",
+      "slots": {
+        "item_name": {
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    {
+      "id": "order_status",
+      "tags": [
+        "order",
+        "status",
+        "tracking"
+      ],
+      "patterns": [
+        {
+          "lang": "en",
+          "text": "Where is my order?"
+        },
+        {
+          "lang": "en",
+          "text": "Order status?"
+        },
+        {
+          "lang": "en",
+          "text": "Track my order"
+        },
+        {
+          "lang": "en",
+          "text": "How long remaining?"
+        },
+        {
+          "lang": "en",
+          "text": "Is my order confirmed?"
+        },
+        {
+          "lang": "ar",
+          "text": "وين طلبي؟"
+        },
+        {
+          "lang": "ar",
+          "text": "حالة الطلب؟"
+        },
+        {
+          "lang": "ar",
+          "text": "تتبع الطلب"
+        },
+        {
+          "lang": "ar",
+          "text": "كم باقي؟"
+        },
+        {
+          "lang": "ar",
+          "text": "هل تم تأكيد طلبي؟"
+        },
+        {
+          "lang": "ru",
+          "text": "mera order kahan hai?"
+        },
+        {
+          "lang": "ru",
+          "text": "order status kya hai?"
+        },
+        {
+          "lang": "ru",
+          "text": "track karo"
+        }
+      ],
+      "answer": {
+        "en": "Your order **#{order_id}** status: **{order_status}**. ETA: **{eta_minutes} min**.",
+        "ar": "حالة طلبك **#{order_id}**: **{order_status_ar}**. الوقت المتوقع: **{eta_minutes} دقيقة**."
+      },
+      "response_type": "dynamic",
+      "slots": {
+        "order_id": {
+          "type": "string",
+          "required": false
+        }
+      }
+    },
+    {
+      "id": "edit_order",
+      "tags": [
+        "order",
+        "edit",
+        "change"
+      ],
+      "patterns": [
+        {
+          "lang": "en",
+          "text": "I want to change my order"
+        },
+        {
+          "lang": "en",
+          "text": "Can I remove an item?"
+        },
+        {
+          "lang": "en",
+          "text": "Update quantity"
+        },
+        {
+          "lang": "en",
+          "text": "Add one more {item_name}"
+        },
+        {
+          "lang": "en",
+          "text": "Cancel one item"
+        },
+        {
+          "lang": "ar",
+          "text": "أبغى أغير طلبي"
+        },
+        {
+          "lang": "ar",
+          "text": "ممكن أشيل صنف؟"
+        },
+        {
+          "lang": "ar",
+          "text": "غير الكمية"
+        },
+        {
+          "lang": "ar",
+          "text": "أضف واحد {item_name}"
+        },
+        {
+          "lang": "ar",
+          "text": "ألغي صنف واحد"
+        },
+        {
+          "lang": "ru",
+          "text": "order change karna hai"
+        },
+        {
+          "lang": "ru",
+          "text": "item remove karo"
+        },
+        {
+          "lang": "ru",
+          "text": "quantity update karo"
+        },
+        {
+          "lang": "ru",
+          "text": "{item_name} ek aur add karo"
+        }
+      ],
+      "answer": {
+        "en": "Sure. Tell me what to change: **add / remove / quantity / spice** and the item name.",
+        "ar": "تمام. قل لي ماذا تريد تغير: **إضافة / حذف / كمية / حار** واسم الصنف."
+      }
+    },
+    {
+      "id": "complaint_refund",
+      "tags": [
+        "complaint",
+        "refund",
+        "issue"
+      ],
+      "patterns": [
+        {
+          "lang": "en",
+          "text": "My order is wrong"
+        },
+        {
+          "lang": "en",
+          "text": "I received missing items"
+        },
+        {
+          "lang": "en",
+          "text": "Food is cold"
+        },
+        {
+          "lang": "en",
+          "text": "I want a refund"
+        },
+        {
+          "lang": "en",
+          "text": "How can I complain?"
+        },
+        {
+          "lang": "ar",
+          "text": "طلبي غلط"
+        },
+        {
+          "lang": "ar",
+          "text": "فيه أصناف ناقصة"
+        },
+        {
+          "lang": "ar",
+          "text": "الأكل بارد"
+        },
+        {
+          "lang": "ar",
+          "text": "أبغى استرجاع"
+        },
+        {
+          "lang": "ar",
+          "text": "كيف أقدم شكوى؟"
+        },
+        {
+          "lang": "ru",
+          "text": "order galat aya"
+        },
+        {
+          "lang": "ru",
+          "text": "items missing hain"
+        },
+        {
+          "lang": "ru",
+          "text": "refund chahiye"
+        },
+        {
+          "lang": "ru",
+          "text": "complain kaise?"
+        }
+      ],
+      "answer": {
+        "en": "Sorry about that. Please share: **order number**, **issue**, and a **photo if possible**. We will resolve it ASAP.",
+        "ar": "نعتذر عن ذلك. فضلاً أرسل: **رقم الطلب**، **المشكلة**، و**صورة إن أمكن** وسنحلها بأسرع وقت."
+      }
+    },
+    {
+      "id": "pickup_takeaway",
+      "tags": [
+        "pickup",
+        "takeaway",
+        "collect"
+      ],
+      "patterns": [
+        {
+          "lang": "en",
+          "text": "Can I pick up my order?"
+        },
+        {
+          "lang": "en",
+          "text": "I want takeaway"
+        },
+        {
+          "lang": "en",
+          "text": "Pick up from store"
+        },
+        {
+          "lang": "en",
+          "text": "Do you have takeaway service?"
+        },
+        {
+          "lang": "en",
+          "text": "Can I order and collect?"
+        },
+        {
+          "lang": "ar",
+          "text": "اقدر أستلم من الفرع؟"
+        },
+        {
+          "lang": "ar",
+          "text": "أبغى سفري"
+        },
+        {
+          "lang": "ar",
+          "text": "استلام من الفرع"
+        },
+        {
+          "lang": "ar",
+          "text": "هل يوجد سفري؟"
+        },
+        {
+          "lang": "ar",
+          "text": "اقدر اطلب واستلم؟"
+        },
+        {
+          "lang": "ru",
+          "text": "pickup kar sakte?"
+        },
+        {
+          "lang": "ru",
+          "text": "takeaway chahiye"
+        },
+        {
+          "lang": "ru",
+          "text": "store se collect?"
+        }
+      ],
+      "answer": {
+        "en": "Yes. Choose **Pickup** and tell us your branch. We’ll prepare it and share pickup time.",
+        "ar": "نعم. اختر **استلام** واذكر الفرع. سنجهز الطلب ونرسل وقت الاستلام."
+      }
+    },
+    {
+      "id": "vat_invoice",
+      "tags": [
+        "invoice",
+        "vat",
+        "tax"
+      ],
+      "patterns": [
+        {
+          "lang": "en",
+          "text": "Do you provide VAT invoice?"
+        },
+        {
+          "lang": "en",
+          "text": "I need an invoice"
+        },
+        {
+          "lang": "en",
+          "text": "Can you send receipt?"
+        },
+        {
+          "lang": "en",
+          "text": "Tax invoice available?"
+        },
+        {
+          "lang": "en",
+          "text": "Invoice for company"
+        },
+        {
+          "lang": "ar",
+          "text": "هل توفرون فاتورة ضريبية؟"
+        },
+        {
+          "lang": "ar",
+          "text": "أبغى فاتورة"
+        },
+        {
+          "lang": "ar",
+          "text": "ممكن إرسال الإيصال؟"
+        },
+        {
+          "lang": "ar",
+          "text": "هل يوجد فاتورة ضريبة؟"
+        },
+        {
+          "lang": "ar",
+          "text": "فاتورة للشركة"
+        },
+        {
+          "lang": "ru",
+          "text": "invoice milegi?"
+        },
+        {
+          "lang": "ru",
+          "text": "receipt bhej do"
+        },
+        {
+          "lang": "ru",
+          "text": "VAT invoice hai?"
+        }
+      ],
+      "answer": {
+        "en": "Yes. We can provide an invoice/receipt. Share your **order number** and **company details** (if needed).",
+        "ar": "نعم. نوفر فاتورة/إيصال. أرسل **رقم الطلب** و**بيانات الشركة** إن لزم."
+      }
+    },
+    {
+      "id": "bulk_catering",
+      "tags": [
+        "bulk",
+        "catering",
+        "large_order"
+      ],
+      "patterns": [
+        {
+          "lang": "en",
+          "text": "Do you take bulk orders?"
+        },
+        {
+          "lang": "en",
+          "text": "Catering available?"
+        },
+        {
+          "lang": "en",
+          "text": "Order for 30 people"
+        },
+        {
+          "lang": "en",
+          "text": "We need food for an event"
+        },
+        {
+          "lang": "en",
+          "text": "Bulk discount?"
+        },
+        {
+          "lang": "ar",
+          "text": "هل تقبلون طلبات كبيرة؟"
+        },
+        {
+          "lang": "ar",
+          "text": "هل يوجد تموين/كاترينج؟"
+        },
+        {
+          "lang": "ar",
+          "text": "طلب لـ 30 شخص"
+        },
+        {
+          "lang": "ar",
+          "text": "نحتاج أكل لفعالية"
+        },
+        {
+          "lang": "ar",
+          "text": "هل يوجد خصم للكميات؟"
+        },
+        {
+          "lang": "ru",
+          "text": "bulk order ho sakta?"
+        },
+        {
+          "lang": "ru",
+          "text": "event ke liye order"
+        },
+        {
+          "lang": "ru",
+          "text": "bulk discount?"
+        }
+      ],
+      "answer": {
+        "en": "Yes. Share **date/time**, **people count**, **items**, and **location**. We’ll confirm pricing and preparation time.",
+        "ar": "نعم. أرسل **التاريخ/الوقت**، **عدد الأشخاص**، **الأصناف**، و**الموقع** وسنؤكد السعر ووقت التجهيز."
+      }
+    },
+    {
+      "id": "feedback_rating",
+      "tags": [
+        "feedback",
+        "rating"
+      ],
+      "patterns": [
+        {
+          "lang": "en",
+          "text": "How can I give feedback?"
+        },
+        {
+          "lang": "en",
+          "text": "I want to rate my order"
+        },
+        {
+          "lang": "en",
+          "text": "Send me feedback link"
+        },
+        {
+          "lang": "en",
+          "text": "I have a suggestion"
+        },
+        {
+          "lang": "en",
+          "text": "Where can I complain or review?"
+        },
+        {
+          "lang": "ar",
+          "text": "كيف أعطي تقييم؟"
+        },
+        {
+          "lang": "ar",
+          "text": "أبغى أقيم طلبي"
+        },
+        {
+          "lang": "ar",
+          "text": "أرسل رابط التقييم"
+        },
+        {
+          "lang": "ar",
+          "text": "عندي اقتراح"
+        },
+        {
+          "lang": "ar",
+          "text": "وين أقدر أكتب تقييم/شكوى؟"
+        },
+        {
+          "lang": "ru",
+          "text": "feedback kaise dein?"
+        },
+        {
+          "lang": "ru",
+          "text": "rating deni hai"
+        },
+        {
+          "lang": "ru",
+          "text": "suggestion hai"
+        }
+      ],
+      "answer": {
+        "en": "You can rate here: **Excellent / Satisfied / Not satisfied**. If you write details, we’ll act on it.",
+        "ar": "تقدر تقيم هنا: **ممتاز / راضٍ / غير راضٍ**. وإذا كتبت تفاصيل سنعالجها."
+      }
+    },
+    {
+      "id": "loyalty_discounts",
+      "tags": [
+        "offers",
+        "discounts",
+        "loyalty"
+      ],
+      "patterns": [
+        {
+          "lang": "en",
+          "text": "Any discounts today?"
+        },
+        {
+          "lang": "en",
+          "text": "Do you have offers?"
+        },
+        {
+          "lang": "en",
+          "text": "Promo code?"
+        },
+        {
+          "lang": "en",
+          "text": "Student discount?"
+        },
+        {
+          "lang": "en",
+          "text": "Loyalty points?"
+        },
+        {
+          "lang": "ar",
+          "text": "فيه عروض اليوم؟"
+        },
+        {
+          "lang": "ar",
+          "text": "هل عندكم عروض؟"
+        },
+        {
+          "lang": "ar",
+          "text": "كود خصم؟"
+        },
+        {
+          "lang": "ar",
+          "text": "خصم طلاب؟"
+        },
+        {
+          "lang": "ar",
+          "text": "نقاط ولاء؟"
+        },
+        {
+          "lang": "ru",
+          "text": "aaj discount hai?"
+        },
+        {
+          "lang": "ru",
+          "text": "offer hai?"
+        },
+        {
+          "lang": "ru",
+          "text": "promo code?"
+        }
+      ],
+      "answer": {
+        "en": "Current offers depend on branch/time. Tell me your **branch** and I’ll show available offers.",
+        "ar": "العروض تختلف حسب الفرع والوقت. اذكر **الفرع** وسأعرض العروض المتاحة."
+      }
+    }
+  ],
+  "examples_flat": [
+    {
+      "lang": "en",
+      "q": "What is the price of Zinger?",
+      "intent": "price_single_item"
+    },
+    {
+      "lang": "en",
+      "q": "How much is Zinger?",
+      "intent": "price_single_item"
+    },
+    {
+      "lang": "en",
+      "q": "Price for Zinger please",
+      "intent": "price_single_item"
+    },
+    {
+      "lang": "en",
+      "q": "Tell me Zinger price",
+      "intent": "price_single_item"
+    },
+    {
+      "lang": "en",
+      "q": "How much does Zinger cost?",
+      "intent": "price_single_item"
+    },
+    {
+      "lang": "en",
+      "q": "What's the cost of Zinger?",
+      "intent": "price_single_item"
+    },
+    {
+      "lang": "en",
+      "q": "Can you check price of Zinger?",
+      "intent": "price_single_item"
+    },
+    {
+      "lang": "en",
+      "q": "How much for one Zinger?",
+      "intent": "price_single_item"
+    },
+    {
+      "lang": "en",
+      "q": "How much is the Zinger alone?",
+      "intent": "price_single_item"
+    },
+    {
+      "lang": "en",
+      "q": "How much is Zinger without meal?",
+      "intent": "price_single_item"
+    },
+    {
+      "lang": "ar",
+      "q": "كم سعر Zinger؟",
+      "intent": "price_single_item"
+    },
+    {
+      "lang": "ar",
+      "q": "سعر Zinger كم؟",
+      "intent": "price_single_item"
+    },
+    {
+      "lang": "ar",
+      "q": "ابغى سعر Zinger",
+      "intent": "price_single_item"
+    },
+    {
+      "lang": "ar",
+      "q": "بكم Zinger؟",
+      "intent": "price_single_item"
+    },
+    {
+      "lang": "ar",
+      "q": "وش سعر Zinger؟",
+      "intent": "price_single_item"
+    },
+    {
+      "lang": "ar",
+      "q": "كم تكلفة Zinger؟",
+      "intent": "price_single_item"
+    },
+    {
+      "lang": "ar",
+      "q": "قدر سعر Zinger",
+      "intent": "price_single_item"
+    },
+    {
+      "lang": "ar",
+      "q": "كم سعر حبة Zinger؟",
+      "intent": "price_single_item"
+    },
+    {
+      "lang": "ar",
+      "q": "سعر Zinger بدون وجبة كم؟",
+      "intent": "price_single_item"
+    },
+    {
+      "lang": "ar",
+      "q": "سعر Zinger لوحده كم؟",
+      "intent": "price_single_item"
+    },
+    {
+      "lang": "ru",
+      "q": "Zinger ka rate kya hai?",
+      "intent": "price_single_item"
+    },
+    {
+      "lang": "ru",
+      "q": "Zinger kitne ka hai?",
+      "intent": "price_single_item"
+    },
+    {
+      "lang": "ru",
+      "q": "Zinger price bata do",
+      "intent": "price_single_item"
+    },
+    {
+      "lang": "ru",
+      "q": "sirf Zinger ki qeemat?",
+      "intent": "price_single_item"
+    },
+    {
+      "lang": "ru",
+      "q": "Zinger without meal kitna?",
+      "intent": "price_single_item"
+    },
+    {
+      "lang": "en",
+      "q": "Price of Zinger meal?",
+      "intent": "price_meal_vs_sandwich"
+    },
+    {
+      "lang": "en",
+      "q": "How much is Zinger meal?",
+      "intent": "price_meal_vs_sandwich"
+    },
+    {
+      "lang": "en",
+      "q": "How much is Zinger sandwich only?",
+      "intent": "price_meal_vs_sandwich"
+    },
+    {
+      "lang": "en",
+      "q": "What's the price difference between Zinger meal and sandwich?",
+      "intent": "price_meal_vs_sandwich"
+    },
+    {
+      "lang": "en",
+      "q": "Give me both prices for Zinger (meal and sandwich)",
+      "intent": "price_meal_vs_sandwich"
+    },
+    {
+      "lang": "ar",
+      "q": "كم سعر وجبة Zinger؟",
+      "intent": "price_meal_vs_sandwich"
+    },
+    {
+      "lang": "ar",
+      "q": "سعر وجبة Zinger كم؟",
+      "intent": "price_meal_vs_sandwich"
+    },
+    {
+      "lang": "ar",
+      "q": "كم سعر Zinger بدون وجبة؟",
+      "intent": "price_meal_vs_sandwich"
+    },
+    {
+      "lang": "ar",
+      "q": "وش الفرق بالسعر بين وجبة Zinger والساندويتش؟",
+      "intent": "price_meal_vs_sandwich"
+    },
+    {
+      "lang": "ar",
+      "q": "اعطني السعرين لـ Zinger: وجبة وساندويتش",
+      "intent": "price_meal_vs_sandwich"
+    },
+    {
+      "lang": "ru",
+      "q": "Zinger meal kitne ka?",
+      "intent": "price_meal_vs_sandwich"
+    },
+    {
+      "lang": "ru",
+      "q": "Zinger sandwich only kitna?",
+      "intent": "price_meal_vs_sandwich"
+    },
+    {
+      "lang": "ru",
+      "q": "Zinger meal aur sandwich dono price?",
+      "intent": "price_meal_vs_sandwich"
+    },
+    {
+      "lang": "en",
+      "q": "Show me the menu categories",
+      "intent": "list_categories"
+    },
+    {
+      "lang": "en",
+      "q": "What categories do you have?",
+      "intent": "list_categories"
+    },
+    {
+      "lang": "en",
+      "q": "Menu categories please",
+      "intent": "list_categories"
+    },
+    {
+      "lang": "en",
+      "q": "What can I order?",
+      "intent": "list_categories"
+    },
+    {
+      "lang": "en",
+      "q": "Show menu",
+      "intent": "list_categories"
+    },
+    {
+      "lang": "ar",
+      "q": "اعرض أقسام المنيو",
+      "intent": "list_categories"
+    },
+    {
+      "lang": "ar",
+      "q": "وش الأقسام اللي عندكم؟",
+      "intent": "list_categories"
+    },
+    {
+      "lang": "ar",
+      "q": "أقسام المنيو لو سمحت",
+      "intent": "list_categories"
+    },
+    {
+      "lang": "ar",
+      "q": "ايش اقدر اطلب؟",
+      "intent": "list_categories"
+    },
+    {
+      "lang": "ar",
+      "q": "اعرض المنيو",
+      "intent": "list_categories"
+    },
+    {
+      "lang": "ru",
+      "q": "menu categories batao",
+      "intent": "list_categories"
+    },
+    {
+      "lang": "ru",
+      "q": "kya kya categories hain?",
+      "intent": "list_categories"
+    },
+    {
+      "lang": "ru",
+      "q": "menu dikhao",
+      "intent": "list_categories"
+    },
+    {
+      "lang": "en",
+      "q": "Is Zinger available?",
+      "intent": "item_availability"
+    },
+    {
+      "lang": "en",
+      "q": "Do you have Zinger right now?",
+      "intent": "item_availability"
+    },
+    {
+      "lang": "en",
+      "q": "Is Zinger in stock?",
+      "intent": "item_availability"
+    },
+    {
+      "lang": "en",
+      "q": "Can I order Zinger today?",
+      "intent": "item_availability"
+    },
+    {
+      "lang": "ar",
+      "q": "هل Zinger متوفر؟",
+      "intent": "item_availability"
+    },
+    {
+      "lang": "ar",
+      "q": "عندكم Zinger الآن؟",
+      "intent": "item_availability"
+    },
+    {
+      "lang": "ar",
+      "q": "هل Zinger موجود؟",
+      "intent": "item_availability"
+    },
+    {
+      "lang": "ar",
+      "q": "اقدر اطلب Zinger اليوم؟",
+      "intent": "item_availability"
+    },
+    {
+      "lang": "ru",
+      "q": "Zinger available hai?",
+      "intent": "item_availability"
+    },
+    {
+      "lang": "ru",
+      "q": "Zinger mil jayega?",
+      "intent": "item_availability"
+    },
+    {
+      "lang": "ru",
+      "q": "aaj Zinger hai?",
+      "intent": "item_availability"
+    },
+    {
+      "lang": "en",
+      "q": "What are your timings?",
+      "intent": "branch_hours"
+    },
+    {
+      "lang": "en",
+      "q": "When do you open?",
+      "intent": "branch_hours"
+    },
+    {
+      "lang": "en",
+      "q": "When do you close?",
+      "intent": "branch_hours"
+    },
+    {
+      "lang": "en",
+      "q": "Working hours for Al Aziziyah?",
+      "intent": "branch_hours"
+    },
+    {
+      "lang": "en",
+      "q": "Al Aziziyah timings please",
+      "intent": "branch_hours"
+    },
+    {
+      "lang": "en",
+      "q": "Are you open now?",
+      "intent": "branch_hours"
+    },
+    {
+      "lang": "ar",
+      "q": "وش أوقات الدوام؟",
+      "intent": "branch_hours"
+    },
+    {
+      "lang": "ar",
+      "q": "متى تفتحون؟",
+      "intent": "branch_hours"
+    },
+    {
+      "lang": "ar",
+      "q": "متى تقفلون؟",
+      "intent": "branch_hours"
+    },
+    {
+      "lang": "ar",
+      "q": "أوقات دوام فرع Al Aziziyah؟",
+      "intent": "branch_hours"
+    },
+    {
+      "lang": "ar",
+      "q": "دوام Al Aziziyah لو سمحت",
+      "intent": "branch_hours"
+    },
+    {
+      "lang": "ar",
+      "q": "هل أنتم فاتحين الآن؟",
+      "intent": "branch_hours"
+    },
+    {
+      "lang": "ru",
+      "q": "timing kya hai?",
+      "intent": "branch_hours"
+    },
+    {
+      "lang": "ru",
+      "q": "kab open hota hai?",
+      "intent": "branch_hours"
+    },
+    {
+      "lang": "ru",
+      "q": "kab close hota hai?",
+      "intent": "branch_hours"
+    },
+    {
+      "lang": "ru",
+      "q": "abhi open ho?",
+      "intent": "branch_hours"
+    },
+    {
+      "lang": "en",
+      "q": "Do you deliver to Al Hamra?",
+      "intent": "delivery_fee_area"
+    },
+    {
+      "lang": "en",
+      "q": "Delivery available in Al Hamra?",
+      "intent": "delivery_fee_area"
+    },
+    {
+      "lang": "en",
+      "q": "What's the delivery fee for Al Hamra?",
+      "intent": "delivery_fee_area"
+    },
+    {
+      "lang": "en",
+      "q": "How much delivery charges?",
+      "intent": "delivery_fee_area"
+    },
+    {
+      "lang": "en",
+      "q": "Is delivery free?",
+      "intent": "delivery_fee_area"
+    },
+    {
+      "lang": "ar",
+      "q": "توصلون إلى Al Hamra؟",
+      "intent": "delivery_fee_area"
+    },
+    {
+      "lang": "ar",
+      "q": "هل التوصيل متاح في Al Hamra؟",
+      "intent": "delivery_fee_area"
+    },
+    {
+      "lang": "ar",
+      "q": "كم رسوم التوصيل لـ Al Hamra؟",
+      "intent": "delivery_fee_area"
+    },
+    {
+      "lang": "ar",
+      "q": "كم قيمة التوصيل؟",
+      "intent": "delivery_fee_area"
+    },
+    {
+      "lang": "ar",
+      "q": "هل التوصيل مجاني؟",
+      "intent": "delivery_fee_area"
+    },
+    {
+      "lang": "ru",
+      "q": "Al Hamra me delivery hai?",
+      "intent": "delivery_fee_area"
+    },
+    {
+      "lang": "ru",
+      "q": "delivery fee kitni hai?",
+      "intent": "delivery_fee_area"
+    },
+    {
+      "lang": "ru",
+      "q": "delivery free hai?",
+      "intent": "delivery_fee_area"
+    },
+    {
+      "lang": "en",
+      "q": "What is the minimum order for delivery?",
+      "intent": "minimum_order"
+    },
+    {
+      "lang": "en",
+      "q": "Minimum order amount?",
+      "intent": "minimum_order"
+    },
+    {
+      "lang": "en",
+      "q": "Do you have minimum for delivery?",
+      "intent": "minimum_order"
+    },
+    {
+      "lang": "en",
+      "q": "Can I order just one item for delivery?",
+      "intent": "minimum_order"
+    },
+    {
+      "lang": "ar",
+      "q": "كم الحد الأدنى للطلب للتوصيل؟",
+      "intent": "minimum_order"
+    },
+    {
+      "lang": "ar",
+      "q": "الحد الأدنى للطلب؟",
+      "intent": "minimum_order"
+    },
+    {
+      "lang": "ar",
+      "q": "هل يوجد حد أدنى للتوصيل؟",
+      "intent": "minimum_order"
+    },
+    {
+      "lang": "ar",
+      "q": "اقدر اطلب شيء واحد للتوصيل؟",
+      "intent": "minimum_order"
+    },
+    {
+      "lang": "ru",
+      "q": "minimum order kitna hai?",
+      "intent": "minimum_order"
+    },
+    {
+      "lang": "ru",
+      "q": "delivery ke liye minimum?",
+      "intent": "minimum_order"
+    },
+    {
+      "lang": "ru",
+      "q": "sirf 1 item delivery ho jayegi?",
+      "intent": "minimum_order"
+    },
+    {
+      "lang": "en",
+      "q": "What payment methods do you accept?",
+      "intent": "payment_methods"
+    },
+    {
+      "lang": "en",
+      "q": "Cash on delivery available?",
+      "intent": "payment_methods"
+    },
+    {
+      "lang": "en",
+      "q": "Can I pay by card?",
+      "intent": "payment_methods"
+    },
+    {
+      "lang": "en",
+      "q": "Do you have online payment?",
+      "intent": "payment_methods"
+    },
+    {
+      "lang": "ar",
+      "q": "ما طرق الدفع المتاحة؟",
+      "intent": "payment_methods"
+    },
+    {
+      "lang": "ar",
+      "q": "هل يوجد دفع عند الاستلام؟",
+      "intent": "payment_methods"
+    },
+    {
+      "lang": "ar",
+      "q": "اقدر ادفع بالبطاقة؟",
+      "intent": "payment_methods"
+    },
+    {
+      "lang": "ar",
+      "q": "هل يوجد دفع أونلاين؟",
+      "intent": "payment_methods"
+    },
+    {
+      "lang": "ru",
+      "q": "payment options kya hain?",
+      "intent": "payment_methods"
+    },
+    {
+      "lang": "ru",
+      "q": "cash on delivery hai?",
+      "intent": "payment_methods"
+    },
+    {
+      "lang": "ru",
+      "q": "card pe pay kar sakte?",
+      "intent": "payment_methods"
+    },
+    {
+      "lang": "en",
+      "q": "Can I make it non spicy?",
+      "intent": "spice_options"
+    },
+    {
+      "lang": "en",
+      "q": "Do you have spicy option?",
+      "intent": "spice_options"
+    },
+    {
+      "lang": "en",
+      "q": "Make it spicy",
+      "intent": "spice_options"
+    },
+    {
+      "lang": "en",
+      "q": "No spice please",
+      "intent": "spice_options"
+    },
+    {
+      "lang": "en",
+      "q": "Mild option available?",
+      "intent": "spice_options"
+    },
+    {
+      "lang": "ar",
+      "q": "ممكن بدون حار؟",
+      "intent": "spice_options"
+    },
+    {
+      "lang": "ar",
+      "q": "هل يوجد خيار حار؟",
+      "intent": "spice_options"
+    },
+    {
+      "lang": "ar",
+      "q": "خليه حار",
+      "intent": "spice_options"
+    },
+    {
+      "lang": "ar",
+      "q": "بدون حار لو سمحت",
+      "intent": "spice_options"
+    },
+    {
+      "lang": "ar",
+      "q": "هل يوجد خيار خفيف؟",
+      "intent": "spice_options"
+    },
+    {
+      "lang": "ru",
+      "q": "non spicy kar do",
+      "intent": "spice_options"
+    },
+    {
+      "lang": "ru",
+      "q": "spicy option hai?",
+      "intent": "spice_options"
+    },
+    {
+      "lang": "ru",
+      "q": "mild hai?",
+      "intent": "spice_options"
+    },
+    {
+      "lang": "en",
+      "q": "What extras can I add?",
+      "intent": "addons_extras"
+    },
+    {
+      "lang": "en",
+      "q": "Any add-ons?",
+      "intent": "addons_extras"
+    },
+    {
+      "lang": "en",
+      "q": "Extra cheese available?",
+      "intent": "addons_extras"
+    },
+    {
+      "lang": "en",
+      "q": "Add fries",
+      "intent": "addons_extras"
+    },
+    {
+      "lang": "en",
+      "q": "Add drink",
+      "intent": "addons_extras"
+    },
+    {
+      "lang": "ar",
+      "q": "وش الإضافات المتاحة؟",
+      "intent": "addons_extras"
+    },
+    {
+      "lang": "ar",
+      "q": "هل يوجد إضافات؟",
+      "intent": "addons_extras"
+    },
+    {
+      "lang": "ar",
+      "q": "هل يوجد جبنة إضافية؟",
+      "intent": "addons_extras"
+    },
+    {
+      "lang": "ar",
+      "q": "أضف بطاطس",
+      "intent": "addons_extras"
+    },
+    {
+      "lang": "ar",
+      "q": "أضف مشروب",
+      "intent": "addons_extras"
+    },
+    {
+      "lang": "ru",
+      "q": "extras kya hain?",
+      "intent": "addons_extras"
+    },
+    {
+      "lang": "ru",
+      "q": "extra cheese milegi?",
+      "intent": "addons_extras"
+    },
+    {
+      "lang": "ru",
+      "q": "fries add karo",
+      "intent": "addons_extras"
+    },
+    {
+      "lang": "ru",
+      "q": "drink add karo",
+      "intent": "addons_extras"
+    },
+    {
+      "lang": "en",
+      "q": "How many calories in Zinger?",
+      "intent": "nutrition_allergens"
+    },
+    {
+      "lang": "en",
+      "q": "Does Zinger have nuts?",
+      "intent": "nutrition_allergens"
+    },
+    {
+      "lang": "en",
+      "q": "Is Zinger gluten free?",
+      "intent": "nutrition_allergens"
+    },
+    {
+      "lang": "en",
+      "q": "Any allergens in Zinger?",
+      "intent": "nutrition_allergens"
+    },
+    {
+      "lang": "ar",
+      "q": "كم سعرات Zinger؟",
+      "intent": "nutrition_allergens"
+    },
+    {
+      "lang": "ar",
+      "q": "هل Zinger فيه مكسرات؟",
+      "intent": "nutrition_allergens"
+    },
+    {
+      "lang": "ar",
+      "q": "هل Zinger خالي من الجلوتين؟",
+      "intent": "nutrition_allergens"
+    },
+    {
+      "lang": "ar",
+      "q": "هل يوجد مسببات حساسية في Zinger؟",
+      "intent": "nutrition_allergens"
+    },
+    {
+      "lang": "ru",
+      "q": "Zinger me calories kitni?",
+      "intent": "nutrition_allergens"
+    },
+    {
+      "lang": "ru",
+      "q": "Zinger me nuts hain?",
+      "intent": "nutrition_allergens"
+    },
+    {
+      "lang": "ru",
+      "q": "gluten free hai?",
+      "intent": "nutrition_allergens"
+    },
+    {
+      "lang": "en",
+      "q": "Where is my order?",
+      "intent": "order_status"
+    },
+    {
+      "lang": "en",
+      "q": "Order status?",
+      "intent": "order_status"
+    },
+    {
+      "lang": "en",
+      "q": "Track my order",
+      "intent": "order_status"
+    },
+    {
+      "lang": "en",
+      "q": "How long remaining?",
+      "intent": "order_status"
+    },
+    {
+      "lang": "en",
+      "q": "Is my order confirmed?",
+      "intent": "order_status"
+    },
+    {
+      "lang": "ar",
+      "q": "وين طلبي؟",
+      "intent": "order_status"
+    },
+    {
+      "lang": "ar",
+      "q": "حالة الطلب؟",
+      "intent": "order_status"
+    },
+    {
+      "lang": "ar",
+      "q": "تتبع الطلب",
+      "intent": "order_status"
+    },
+    {
+      "lang": "ar",
+      "q": "كم باقي؟",
+      "intent": "order_status"
+    },
+    {
+      "lang": "ar",
+      "q": "هل تم تأكيد طلبي؟",
+      "intent": "order_status"
+    },
+    {
+      "lang": "ru",
+      "q": "mera order kahan hai?",
+      "intent": "order_status"
+    },
+    {
+      "lang": "ru",
+      "q": "order status kya hai?",
+      "intent": "order_status"
+    },
+    {
+      "lang": "ru",
+      "q": "track karo",
+      "intent": "order_status"
+    },
+    {
+      "lang": "en",
+      "q": "I want to change my order",
+      "intent": "edit_order"
+    },
+    {
+      "lang": "en",
+      "q": "Can I remove an item?",
+      "intent": "edit_order"
+    },
+    {
+      "lang": "en",
+      "q": "Update quantity",
+      "intent": "edit_order"
+    },
+    {
+      "lang": "en",
+      "q": "Add one more Zinger",
+      "intent": "edit_order"
+    },
+    {
+      "lang": "en",
+      "q": "Cancel one item",
+      "intent": "edit_order"
+    },
+    {
+      "lang": "ar",
+      "q": "أبغى أغير طلبي",
+      "intent": "edit_order"
+    },
+    {
+      "lang": "ar",
+      "q": "ممكن أشيل صنف؟",
+      "intent": "edit_order"
+    },
+    {
+      "lang": "ar",
+      "q": "غير الكمية",
+      "intent": "edit_order"
+    },
+    {
+      "lang": "ar",
+      "q": "أضف واحد Zinger",
+      "intent": "edit_order"
+    },
+    {
+      "lang": "ar",
+      "q": "ألغي صنف واحد",
+      "intent": "edit_order"
+    },
+    {
+      "lang": "ru",
+      "q": "order change karna hai",
+      "intent": "edit_order"
+    },
+    {
+      "lang": "ru",
+      "q": "item remove karo",
+      "intent": "edit_order"
+    },
+    {
+      "lang": "ru",
+      "q": "quantity update karo",
+      "intent": "edit_order"
+    },
+    {
+      "lang": "ru",
+      "q": "Zinger ek aur add karo",
+      "intent": "edit_order"
+    },
+    {
+      "lang": "en",
+      "q": "My order is wrong",
+      "intent": "complaint_refund"
+    },
+    {
+      "lang": "en",
+      "q": "I received missing items",
+      "intent": "complaint_refund"
+    },
+    {
+      "lang": "en",
+      "q": "Food is cold",
+      "intent": "complaint_refund"
+    },
+    {
+      "lang": "en",
+      "q": "I want a refund",
+      "intent": "complaint_refund"
+    },
+    {
+      "lang": "en",
+      "q": "How can I complain?",
+      "intent": "complaint_refund"
+    },
+    {
+      "lang": "ar",
+      "q": "طلبي غلط",
+      "intent": "complaint_refund"
+    },
+    {
+      "lang": "ar",
+      "q": "فيه أصناف ناقصة",
+      "intent": "complaint_refund"
+    },
+    {
+      "lang": "ar",
+      "q": "الأكل بارد",
+      "intent": "complaint_refund"
+    },
+    {
+      "lang": "ar",
+      "q": "أبغى استرجاع",
+      "intent": "complaint_refund"
+    },
+    {
+      "lang": "ar",
+      "q": "كيف أقدم شكوى؟",
+      "intent": "complaint_refund"
+    },
+    {
+      "lang": "ru",
+      "q": "order galat aya",
+      "intent": "complaint_refund"
+    },
+    {
+      "lang": "ru",
+      "q": "items missing hain",
+      "intent": "complaint_refund"
+    },
+    {
+      "lang": "ru",
+      "q": "refund chahiye",
+      "intent": "complaint_refund"
+    },
+    {
+      "lang": "ru",
+      "q": "complain kaise?",
+      "intent": "complaint_refund"
+    },
+    {
+      "lang": "en",
+      "q": "Can I pick up my order?",
+      "intent": "pickup_takeaway"
+    },
+    {
+      "lang": "en",
+      "q": "I want takeaway",
+      "intent": "pickup_takeaway"
+    },
+    {
+      "lang": "en",
+      "q": "Pick up from store",
+      "intent": "pickup_takeaway"
+    },
+    {
+      "lang": "en",
+      "q": "Do you have takeaway service?",
+      "intent": "pickup_takeaway"
+    },
+    {
+      "lang": "en",
+      "q": "Can I order and collect?",
+      "intent": "pickup_takeaway"
+    },
+    {
+      "lang": "ar",
+      "q": "اقدر أستلم من الفرع؟",
+      "intent": "pickup_takeaway"
+    },
+    {
+      "lang": "ar",
+      "q": "أبغى سفري",
+      "intent": "pickup_takeaway"
+    },
+    {
+      "lang": "ar",
+      "q": "استلام من الفرع",
+      "intent": "pickup_takeaway"
+    },
+    {
+      "lang": "ar",
+      "q": "هل يوجد سفري؟",
+      "intent": "pickup_takeaway"
+    },
+    {
+      "lang": "ar",
+      "q": "اقدر اطلب واستلم؟",
+      "intent": "pickup_takeaway"
+    },
+    {
+      "lang": "ru",
+      "q": "pickup kar sakte?",
+      "intent": "pickup_takeaway"
+    },
+    {
+      "lang": "ru",
+      "q": "takeaway chahiye",
+      "intent": "pickup_takeaway"
+    },
+    {
+      "lang": "ru",
+      "q": "store se collect?",
+      "intent": "pickup_takeaway"
+    },
+    {
+      "lang": "en",
+      "q": "Do you provide VAT invoice?",
+      "intent": "vat_invoice"
+    },
+    {
+      "lang": "en",
+      "q": "I need an invoice",
+      "intent": "vat_invoice"
+    },
+    {
+      "lang": "en",
+      "q": "Can you send receipt?",
+      "intent": "vat_invoice"
+    },
+    {
+      "lang": "en",
+      "q": "Tax invoice available?",
+      "intent": "vat_invoice"
+    },
+    {
+      "lang": "en",
+      "q": "Invoice for company",
+      "intent": "vat_invoice"
+    },
+    {
+      "lang": "ar",
+      "q": "هل توفرون فاتورة ضريبية؟",
+      "intent": "vat_invoice"
+    },
+    {
+      "lang": "ar",
+      "q": "أبغى فاتورة",
+      "intent": "vat_invoice"
+    },
+    {
+      "lang": "ar",
+      "q": "ممكن إرسال الإيصال؟",
+      "intent": "vat_invoice"
+    },
+    {
+      "lang": "ar",
+      "q": "هل يوجد فاتورة ضريبة؟",
+      "intent": "vat_invoice"
+    },
+    {
+      "lang": "ar",
+      "q": "فاتورة للشركة",
+      "intent": "vat_invoice"
+    },
+    {
+      "lang": "ru",
+      "q": "invoice milegi?",
+      "intent": "vat_invoice"
+    },
+    {
+      "lang": "ru",
+      "q": "receipt bhej do",
+      "intent": "vat_invoice"
+    },
+    {
+      "lang": "ru",
+      "q": "VAT invoice hai?",
+      "intent": "vat_invoice"
+    },
+    {
+      "lang": "en",
+      "q": "Do you take bulk orders?",
+      "intent": "bulk_catering"
+    },
+    {
+      "lang": "en",
+      "q": "Catering available?",
+      "intent": "bulk_catering"
+    },
+    {
+      "lang": "en",
+      "q": "Order for 30 people",
+      "intent": "bulk_catering"
+    },
+    {
+      "lang": "en",
+      "q": "We need food for an event",
+      "intent": "bulk_catering"
+    },
+    {
+      "lang": "en",
+      "q": "Bulk discount?",
+      "intent": "bulk_catering"
+    },
+    {
+      "lang": "ar",
+      "q": "هل تقبلون طلبات كبيرة؟",
+      "intent": "bulk_catering"
+    },
+    {
+      "lang": "ar",
+      "q": "هل يوجد تموين/كاترينج؟",
+      "intent": "bulk_catering"
+    },
+    {
+      "lang": "ar",
+      "q": "طلب لـ 30 شخص",
+      "intent": "bulk_catering"
+    },
+    {
+      "lang": "ar",
+      "q": "نحتاج أكل لفعالية",
+      "intent": "bulk_catering"
+    },
+    {
+      "lang": "ar",
+      "q": "هل يوجد خصم للكميات؟",
+      "intent": "bulk_catering"
+    },
+    {
+      "lang": "ru",
+      "q": "bulk order ho sakta?",
+      "intent": "bulk_catering"
+    },
+    {
+      "lang": "ru",
+      "q": "event ke liye order",
+      "intent": "bulk_catering"
+    },
+    {
+      "lang": "ru",
+      "q": "bulk discount?",
+      "intent": "bulk_catering"
+    },
+    {
+      "lang": "en",
+      "q": "How can I give feedback?",
+      "intent": "feedback_rating"
+    },
+    {
+      "lang": "en",
+      "q": "I want to rate my order",
+      "intent": "feedback_rating"
+    },
+    {
+      "lang": "en",
+      "q": "Send me feedback link",
+      "intent": "feedback_rating"
+    },
+    {
+      "lang": "en",
+      "q": "I have a suggestion",
+      "intent": "feedback_rating"
+    },
+    {
+      "lang": "en",
+      "q": "Where can I complain or review?",
+      "intent": "feedback_rating"
+    },
+    {
+      "lang": "ar",
+      "q": "كيف أعطي تقييم؟",
+      "intent": "feedback_rating"
+    },
+    {
+      "lang": "ar",
+      "q": "أبغى أقيم طلبي",
+      "intent": "feedback_rating"
+    },
+    {
+      "lang": "ar",
+      "q": "أرسل رابط التقييم",
+      "intent": "feedback_rating"
+    },
+    {
+      "lang": "ar",
+      "q": "عندي اقتراح",
+      "intent": "feedback_rating"
+    },
+    {
+      "lang": "ar",
+      "q": "وين أقدر أكتب تقييم/شكوى؟",
+      "intent": "feedback_rating"
+    },
+    {
+      "lang": "ru",
+      "q": "feedback kaise dein?",
+      "intent": "feedback_rating"
+    },
+    {
+      "lang": "ru",
+      "q": "rating deni hai",
+      "intent": "feedback_rating"
+    },
+    {
+      "lang": "ru",
+      "q": "suggestion hai",
+      "intent": "feedback_rating"
+    },
+    {
+      "lang": "en",
+      "q": "Any discounts today?",
+      "intent": "loyalty_discounts"
+    },
+    {
+      "lang": "en",
+      "q": "Do you have offers?",
+      "intent": "loyalty_discounts"
+    },
+    {
+      "lang": "en",
+      "q": "Promo code?",
+      "intent": "loyalty_discounts"
+    },
+    {
+      "lang": "en",
+      "q": "Student discount?",
+      "intent": "loyalty_discounts"
+    },
+    {
+      "lang": "en",
+      "q": "Loyalty points?",
+      "intent": "loyalty_discounts"
+    },
+    {
+      "lang": "ar",
+      "q": "فيه عروض اليوم؟",
+      "intent": "loyalty_discounts"
+    },
+    {
+      "lang": "ar",
+      "q": "هل عندكم عروض؟",
+      "intent": "loyalty_discounts"
+    },
+    {
+      "lang": "ar",
+      "q": "كود خصم؟",
+      "intent": "loyalty_discounts"
+    },
+    {
+      "lang": "ar",
+      "q": "خصم طلاب؟",
+      "intent": "loyalty_discounts"
+    },
+    {
+      "lang": "ar",
+      "q": "نقاط ولاء؟",
+      "intent": "loyalty_discounts"
+    },
+    {
+      "lang": "ru",
+      "q": "aaj discount hai?",
+      "intent": "loyalty_discounts"
+    },
+    {
+      "lang": "ru",
+      "q": "offer hai?",
+      "intent": "loyalty_discounts"
+    },
+    {
+      "lang": "ru",
+      "q": "promo code?",
+      "intent": "loyalty_discounts"
+    }
+  ]
+}
