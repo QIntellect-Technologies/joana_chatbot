@@ -16,6 +16,205 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# =========================================================
+# 🚫 IRRELEVANT & OFFENSIVE TERMS DICTIONARY (1000+ Words Scope)
+# =========================================================
+IRRELEVANT_TERMS = [
+    # --- PROFANITY & INSULTS (English) ---
+    "fuck", "shit", "bitch", "asshole", "bastard", "dick", "pussy", "cunt", "whore", "slut", 
+    "idiot", "stupid", "dumb", "fool", "moron", "imbecile", "retard", "crazy", "mad", "ugly", 
+    "fat", "hate you", "kill yourself", "die", "shut up", "stfu", "wtf", "suck", "lick", 
+    "penis", "vagina", "sex", "porn", "nude", "naked", "rape", "molest", "racist", "nigger", 
+    "faggot", "gay", "lesbian", "homo", "tranny", "pervert", "creep", "loser", "scum", "trash", 
+    "dirt", "filth", "disgusting", "horrible", "terrible", "worst", "bad bot", "useless", 
+    "annoying", "boring", "leave me", "go away", "get lost", "f off", "screw you", "damn",
+    "fake", "hell", "crap", "bullshit", "bloody", "wanker", "bugger", "bollocks", "arse", "cock",
+    "prick", "twat", "minge", "munter", "chode", "jerk", "douche", "dipshit", "fuckface",
+    "motherfucker", "son of a bitch", "jerkoff", "wank", "bastards", "bitchy", "bitching",
+    "cocky", "cocksucker", "dumbo", "dummy", "dunce", "freak", "goon", "jackass", "lame",
+    "lunatic", "maniac", "nutcase", "nutter", "psycho", "psychopath", "simpleton", "thick",
+    "twit", "wacko", "weirdo", "zero", "zit", "zombie", "abuser", "alcoholic", "addict",
+    "amateur", "animal", "ape", "baboon", "bandit", "beggar", "bigot", "bimbo", "brat",
+    "brute", "buffoon", "bum", "butcher", "cannibal", "cheat", "clown", "coward", "crook",
+    "demon", "devil", "dinosaur", "donkey", "dope", "dork", "dregs", "drunk", "dullard",
+    "egoist", "enemy", "evil", "failure", "fake", "fanatic", "fiend", "fraud", "gangster",
+    "garbage", "geek", "goblin", "goose", "gossip", "gremlin", "grouch", "grump", "hacker",
+    "harlot", "heathen", "hick", "hooligan", "hypocrite", "ignoramus", "imp", "imposter",
+    "incompetent", "infidel", "insect", "invader", "junkie", "killer", "larcenist", "leech",
+    "liar", "loafer", "lout", "louse", "lowlife", "madman", "misfit", "mobster", "mongrel",
+    "monad", "monster", "moocher", "mule", "mutant", "neanderthal", "nerd", "nobody",
+    "noob", "nuisance", "oaf", "oddball", "ogre", "outcast", "outlaw", "parasite", "peasant",
+    "pest", "phoney", "pig", "pirate", "plague", "poison", "polluter", "poser", "predator",
+    "primate", "prisoner", "prostitute", "pusher", "quack", "quitter", "radical", "rascal",
+    "rat", "rebel", "reject", "reptile", "rival", "robot", "rogue", "rubbish", "runt",
+    "savage", "scandal", "scarecrow", "schizo", "scoundrel", "scream", "screech", "shame",
+    "shark", "sheep", "shrew", "sinner", "skank", "skeleton", "skunk", "slaver", "slob",
+    "sloth", "slug", "snake", "snob", "snot", "softy", "specter", "spider", "sponge",
+    "spy", "squatter", "squirrel", "stinker", "stooge", "stranger", "swindler", "sycophant",
+    "target", "thief", "thug", "toad", "tool", "tramp", "traitor", "troll", "trouble",
+    "turkey", "tyrant", "urchin", "vampire", "vandal", "varlet", "vermin", "victim",
+    "villain", "viper", "virus", "vulture", "warthog", "wastrel", "weasel", "weed", "whale",
+    "wimp", "witch", "wolf", "worm", "wretch", "yokel", "zany", "zealot",
+
+    # --- PROFANITY & INSULTS (Arabic) ---
+    "لعن", "قذر", "تافه", "حقير", "كلب", "حيوان", "غبي", "حمار", "تيس", "مجنون", "أهبل", "عبيط",
+    "زبالة", "حثالة", "واطي", "سافل", "منحط", "قليل أدب", "وقح", "خرا", "زفت", "قحبة", "شرموطة",
+    "منيوك", "خول", "شواذ", "لوطي", "ديوث", "عرص", "قواد", "كلبة", "حيوانة", "حماره", "جحش",
+    "بغل", "ثور", "بقرة", "نعجة", "خروف", "تفه", "انقلع", "طز", "كس", "أير", "زب", "طيز",
+    "مؤخرة", "صدر", "بز", "حلمة", "نيك", "لحس", "مص", "عاهرة", "داعرة", "فاجرة", "زانية",
+    "ساقطة", "ملعون", "الله يلعنك", "يخرب بيتك", "الله ياخذك", "موت", "انتحر", "اخرس", "اسكت",
+    "سد بوزك", "كل تبن", "كل زق", "يا ورع", "يا بزر", "يا متخلف", "يا معاق", "يا مريض",
+    "يا قبيح", "يا دب", "يا سمين", "يا ناصح", "يا عريض", "يا وسخ", "يا نجس", "يا كافر",
+    "يا ملحد", "يا يهودي", "يا صهيوني", "يا خاين", "يا عميل", "يا جاسوس", "يا نصاب", "يا حرامي",
+    "يا سراق", "يا كذاب", "يا منافق", "يا دجال", "يا مشعوذ", "يا ساحر", "يا شيطان", "يا ابليس",
+    "يا جن", "يا عفريت", "يا مارد", "يا غول", "يا مسخ", "يا بشع", "يا مقرف", "يا مقزز",
+    "يا عفن", "يا نتن", "يا ريحة", "يا زبال", "يا كناس", "يا خدام", "يا عبد", "يا رقيق",
+
+    # --- POLITICS & CONTROVERSIAL TOPICS ---
+    "politics", "president", "trump", "biden", "obama", "clinton", "bush", "putin", "russia",
+    "ukraine", "war", "gaza", "palestine", "israel", "jews", "muslims", "christians", "religion",
+    "god", "allah", "jesus", "church", "mosque", "temple", "bible", "quran", "torah", "atheist",
+    "communist", "socialist", "democrat", "republican", "liberal", "conservative", "fascist",
+    "nazi", "hitler", "holocaust", "genocide", "terrorism", "terrorist", "isis", "alqaeda",
+    "taliban", "hamas", "hezbollah", "jihad", "crusade", "bomb", "explosion", "gun", "shoot",
+    "kill", "murder", "death", "blood", "army", "military", "police", "cop", "acab", "blm",
+    "lgbt", "feminist", "woke", "cancel culture", "scam", "fraud", "money laundering", "drugs",
+    "cocaine", "heroin", "weed", "marijuana", "hash", "meth", "acid", "pills", "dealer",
+    "cartel", "mafia", "gang", "crime", "jail", "prison", "court", "lawyer", "judge",
+    "sue", "lawsuit", "taxes", "government", "parliament", "congress", "senate", "minister",
+    "prime minister", "king", "queen", "prince", "princess", "royal", "dictator", "regime",
+    "revolution", "protest", "riot", "strike", "union", "labor", "economy", "inflation",
+    "recession", "stock market", "crypto", "bitcoin", "nft", "blockchain", "bank", "loan",
+    "debt", "mortgage", "insurance", "visa", "passport", "immigration", "refugee", "border",
+    "wall", "customs", "airport", "plane", "crash", "accident", "disaster", "earthquake",
+    "tsunami", "flood", "hurricane", "storm", "wildfire", "drought", "famine", "plague",
+    "pandemic", "covid", "corona", "virus", "vaccine", "mask", "lockdown", "quarantine",
+
+    # --- WEATHER & SMALL TALK ---
+    "weather", "rain", "snow", "sun", "cloud", "wind", "forecast", "temperature", "climate",
+    "global warming", "environment", "nature", "sky", "moon", "star", "space", "planet",
+    "galaxy", "universe", "aliens", "ufo", "ghost", "spirit", "soul", "magic", "horoscope",
+    "zodiac", "astrology", "psychic", "future", "past", "history", "science", "physics",
+    "chemistry", "biology", "math", "algebra", "geometry", "calculus", "school", "college",
+    "university", "homework", "exam", "test", "grade", "teacher", "professor", "student",
+    "classmate", "job", "work", "boss", "manager", "colleague", "salary", "bonus", "promotion",
+    "hiring", "firing", "resume", "cv", "interview", "office", "meeting", "presentation",
+    "email", "phone", "call", "text", "whatsapp", "instagram", "facebook", "twitter", "tiktok",
+    "snapchat", "youtube", "linkedin", "pinterest", "reddit", "discord", "telegram", "social media",
+    "internet", "wifi", "network", "server", "computer", "laptop", "tablet", "mobile",
+    "screen", "keyboard", "mouse", "battery", "charger", "camera", "photo", "video",
+    "music", "song", "singer", "band", "concert", "festival", "movie", "film", "cinema",
+    "actor", "actress", "director", "producer", "carpet", "oscar", "emmy", "grammy",
+    "sport", "game", "match", "team", "player", "coach", "referee", "stadium", "arena",
+    "football", "soccer", "basketball", "baseball", "tennis", "golf", "cricket", "rugby",
+    "hockey", "boxing", "wrestling", "ufc", "mma", "gym", "workout", "fitness", "yoga",
+    "running", "swimming", "cycling", "hiking", "travel", "trip", "vacation", "holiday",
+    "hotel", "flight", "ticket", "booking", "reservation", "guide", "tour", "map",
+    "location", "gps", "address", "city", "country", "state", "province", "village",
+    "town", "street", "road", "highway", "bridge", "tunnel", "traffic", "car", "bus",
+    "train", "metro", "subway", "tram", "taxi", "uber", "bike", "scooter", "boat",
+    "ship", "ferry", "cruise", "yacht", "port", "station", "stop", "parking", "garage",
+    "gas", "petrol", "diesel", "electric", "mechanic", "repair", "service", "clean",
+    "wash", "dust", "sweep", "mop", "vacuum", "laundry", "iron", "fold", "kitchen",
+    "bed", "sleep", "dream", "nightmare", "wake", "alarm", "clock", "watch", "time",
+    "day", "night", "morning", "afternoon", "evening", "week", "month", "year", "decade",
+    "century", "millennium", "era", "epoch", "monday", "tuesday", "wednesday", "thursday",
+    "friday", "saturday", "sunday", "january", "february", "march", "april", "may",
+    "june", "july", "august", "september", "october", "november", "december", "spring",
+    "summer", "autumn", "winter", "season", "holiday", "birthday", "anniversary", "wedding",
+    "divorce", "funeral", "party", "celebration", "gift", "present", "cake", "balloon",
+    "candle", "flower", "rose", "lily", "tulip", "garden", "park", "tree", "plant",
+    "grass", "leaf", "root", "seed", "fruit", "vegetable", "meat", "fish",
+    # (Note: food words are okay if relevant, but random chatter about them like "I like fish" might be handled by chatbot NLP, but insults with them are handled above)
+
+    # --- ARABIC IRRELEVANT (Politics, Chat, etc.) ---
+    "سياسة", "حكومة", "رئيس", "ملك", "أمير", "وزير", "سفير", "دولة", "وطن", "شعب",
+    "حرب", "جيش", "شرطة", "قانون", "محكمة", "سجن", "جريمة", "مخدرات", "سلاح", "قتل",
+    "موت", "انتحار", "دم", "حادث", "كارثة", "زلزال", "بركان", "فيضان", "إعصار", "طقس",
+    "جو", "حرارة", "برد", "مطر", "ثلج", "شمس", "قمر", "فضاء", "كون", "علم", "دراسة",
+    "مدرسة", "جامعة", "عمل", "شغل", "راتب", "فلوس", "بحر", "سفر", "سياحة", "فندق",
+    "طائرة", "قطار", "سيارة", "باص", "تيكسي", "أوبر", "كريم", "جوال", "موبايل", "نت",
+    "إنترنت", "فيسبوك", "تويتر", "انستقرام", "سناب", "يوتيوب", "واتس", "لعبة", "كرة",
+    "مباراة", "فريق", "نادي", "لاعب", "مدرب", "حكم", "هدف", "كأس", "دوري", "بطولة",
+    "فيلم", "مسلسل", "أغنية", "موسيقى", "رواية", "كتاب", "قصة", "شعر", "أدب", "تاريخ",
+    "جغرافيا", "دين", "إسلام", "مسيحية", "يهودية", "إلحاد", "صلاة", "صوم", "زكاة", "حج",
+    "عمرة", "مسجد", "كنيسة", "معبد", "قرآن", "إنجيل", "توراة", "نبي", "رسول", "ملائكة",
+    "شياطين", "جن", "سحر", "عين", "حسد", "زواج", "طلاق", "خطوبة", "حب", "غرام", "عشق",
+    "كره", "حقد", "غيرة", "خيانة", "كذب", "صدق", "أمانة", "سرقة", "نصب", "احتيال",
+    "فساد", "رشوة", "واسطة", "محسوبية", "عنصرية", "طائفية", "قبلية", "عشائرية", "سيارة",
+    "بيت", "عمارة", "شقة", "أرض", "مزرعة", "شارع", "حي", "مدينة", "قرية", "محافظة",
+
+    # --- EXPANDED VOCABULARY (General Chat, Objects, Places, Time) ---
+    "table", "chair", "window", "door", "floor", "ceiling", "wall", "room", "house", "building",
+    "street", "road", "park", "garden", "city", "town", "village", "country", "world", "planet",
+    "sun", "moon", "star", "sky", "cloud", "rain", "snow", "wind", "storm", "thunder",
+    "lightning", "cold", "warm", "cool", "dry", "wet", "humid", "fog", "mist",
+    "morning", "noon", "afternoon", "evening", "night", "midnight", "today", "tomorrow", "yesterday",
+    "week", "month", "year", "decade", "century", "monday", "tuesday", "wednesday", "thursday",
+    "friday", "saturday", "sunday", "january", "february", "march", "april", "may", "june",
+    "july", "august", "september", "october", "november", "december", "spring", "summer", "autumn",
+    "winter", "holiday", "vacation", "trip", "journey", "travel", "flight", "plane", "train",
+    "bus", "car", "taxi", "bike", "bicycle", "ship", "boat", "sea", "ocean", "river",
+    "lake", "mountain", "hill", "forest", "tree", "flower", "grass", "plant", "animal",
+    "cat", "bird", "fish", "horse", "cow", "sheep", "pig", "duck",
+    "lion", "tiger", "bear", "elephant", "monkey", "rabbit", "mouse", "snake", "lizard",
+    "spider", "insect", "fly", "bee", "ant", "butterfly", "mosquito", "worm", "bug",
+    "head", "hair", "face", "eye", "ear", "nose", "mouth", "tooth", "tongue", "neck",
+    "shoulder", "arm", "hand", "finger", "thumb", "chest", "back", "stomach", "leg",
+    "knee", "foot", "toe", "skin", "blood", "bone", "heart", "brain", "lung",
+    "doctor", "nurse", "teacher", "student", "police", "fireman", "soldier", "lawyer",
+    "judge", "king", "queen", "president", "minister", "actor", "singer", "artist",
+    "writer", "driver", "pilot", "cook", "chef", "waiter", "farmer", "worker", "boss",
+    "manager", "friend", "enemy", "family", "father", "mother", "brother", "sister",
+    "son", "daughter", "husband", "wife", "uncle", "aunt", "cousin", "grandfather",
+    "grandmother", "boy", "girl", "man", "woman", "child", "baby", "person", "people",
+    "sick", "strong", "weak", "rich", "poor", "smart", "stupid", "funny",
+    "boring", "big", "small", "tall",
+    "short", "long", "heavy", "light", "hard", "soft", "fast", "slow", "clean",
+    "dirty", "beautiful", "ugly", "expensive", "cheap", "free", "busy", "lazy",
+    "here", "there", "now", "then", "always", "never", "sometimes", "often", "usually",
+    
+    # --- MORE ARABIC (General) ---
+    "طاولة", "كرسي", "شباك", "باب", "أرضية", "سقف", "جدار", "غرفة", "بيت", "مبنى",
+    "شارع", "حديقة", "مدينة", "قرية", "دولة", "عالم", "كوكب", "شمس", "قمر", "نجم",
+    "سماء", "سحاب", "مطر", "ثلج", "رياح", "عاصفة", "رعد", "برق", "حر", "برد",
+    "دافئ", "بارد", "جاف", "رطب", "ضباب", "صباح", "ظهر", "عصر", "مغرب", "عشاء",
+    "ليل", "نهار", "يوم", "أمس", "غدا", "أسبوع", "شهر", "سنة", "عقد", "قرن",
+    "سبت", "أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "يناير", "فبراير", "مارس",
+    "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر",
+    "صيف", "خريف", "شتاء", "إجازة", "عطلة", "سفر", "رحلة", "طيران", "طائرة",
+    "قطار", "باص", "سيارة", "تكسي", "دراجة", "سفينة", "قارب", "بحر", "محيط", "نهر",
+    "بحيرة", "جبل", "تل", "غابة", "شجرة", "زهرة", "عشب", "نبات", "حيوان", "كلب",
+    "قطة", "عصفور", "سمكة", "حصان", "بقر", "غنم", "أسد", "نمر", "دب",
+    "فيل", "قرد", "أرنب", "فأر", "ثعبان", "حشرة", "ذبابة", "نحلة", "نملة", "رأس",
+    "شعر", "وجه", "عين", "أذن", "أنف", "فم", "سن", "لسان", "رقبة", "كتف",
+    "يد", "اصبع", "بطن", "ظهر", "رجل", "ركبة", "قدم", "جلد", "دم", "عظم",
+    "قلب", "مخ", "دكتور", "ممرض", "معلم", "طالب", "شرطي", "جندي", "محامي", "قاضي",
+    "ملك", "ملكة", "رئيس", "وزير", " ممثل", "مغني", "كاتب", "سائق", "طيار", "طباخ",
+    "عامل", "مدير", "صديق", "عدو", "عائلة", "أب", "أم", "أخ", "أخت", "ابن",
+    "ابنة", "زوج", "زوجة", "عم", "خال", "جد", "جدة", "ولد", "بنت", "رجل",
+    "قوي", "ضعيف", "غني", "فقير", "ذكي",
+    "غبي", "مضحك", "ممل", "صغير", "كبير", "طويل",
+    "قصير", "ثقيل", "خفيف", "صعب", "سهل", "سريع", "بطيئ", "نظيف", "وسخ", "جميل",
+    "بعدين", "دايما", "أبدا", "أحيانا", "غالبا", "عادة",
+    "رقم", "سؤال", "جواب", "مشكلة", "حل", "فكرة", "رأي", "قصة", "خبر", "سر",
+    "نكتة", "لغز", "حكمة", "مثل", "كيفك", "شلونك", "شخبارك", "عساك بخير", "منيح", "تمام",
+    "بخير", "الحمدلله", "ماشي الحال", "شو بتعمل", "وين رايح", "من وين", "شو اسمك", "كم عمرك",
+    "متزوج", "أعزب", "خاطب", "مطلقة", "أرملة", "صاحب", "رفيق", "زميل", "جار",
+    "ضيف", "زائر", "عميل", "زبون", "بايع", "شتري", "سعر", "تكلفة", "حساب", "فاتورة",
+    "كاش", "بطاقة", "صراف", "بنك", "تحويل", "رسالة", "اتصال", "مكالمة", "صورة", "فيديو",
+    "صوت", "شاشة", "لوحة", "قلم", "ورقة", "ملف", "حقيبة", "شنطة", "كيس", "علبة",
+    "زجاجة", "قارورة", "كوب", "ملعقة", "شوكة", "سكين", "صحن", "قدر", "مقلاة", "فرن",
+    "ثلاجة", "غسالة", "مكيف", "مروحة", "لمبة", "سلك", "شاحن", "سماعة", "ميكروفون", "كاميرا",
+    "مفتاح", "قفل", "باب", "شباك", "ستارة", "سجادة", "كنبة", "سرير", "مخدة", "بطانية",
+    "لحاف", "منشفة", "صابون", "شامبو", "عطر", "مشط", "فرشاة", "معجون", "حذاء", "جورب",
+    "بنطلون", "قميص", "بلوزة", "فستان", "تنورة", "جاكيت", "معطف", "قبعة", "نظارة", "ساعة",
+    "خاتم", "عقد", "سوار", "حلق", "ذهب", "فضة", "ماس", "لؤلؤ", "حجر", "رمل",
+    "تراب", "طين", "غبار", "دخان", "نار", "رماد", "خشب", "حديد", "نحاس", "زجاج",
+    "بلاستيك", "ورق", "قماش", "قطن", "صوف", "حرير", "جلد", "فرو", "ريش", "عظم",
+]
+
+
 
 import re
 def extract_qty_from_text(text: str):
@@ -664,6 +863,9 @@ CANON_MENU_CATS = {
     "juices": {"juices", "juice", "Juices"},
     "drinks": {"drinks", "drink", "Drinks"},
 }
+
+
+
 
 def _norm(s: str) -> str:
     return re.sub(r"\s+", " ", (s or "").strip().lower())
@@ -4678,27 +4880,6 @@ def whatsapp_webhook():
     )
 
     # 🚫 EARLY GUARD: Abusive queries
-    msg_low_guard = (user_text or "").lower()
-    abusive_keywords = [
-        "stupid", "idiot", "dumb", "shut up", "fuck", "shit", "bitch",
-        "لعن", "قذر", "تافه"
-    ]
-    is_abusive_guard = any(k in msg_low_guard for k in abusive_keywords)
-
-    if not from_button and is_abusive_guard:
-        reply_guard = (
-            "آسف، لا يمكنني المساعدة في ذلك. يمكن طلب عناصر القائمة فقط. الرجاء الاختيار من القائمة."
-            if lang == "ar" else
-            "Sorry, I can't assist with that. Only menu items can be ordered. Please choose from the menu."
-        )
-        send_category_buttons(user_number, lang, show_image=False)
-        WHATSAPP_SESSIONS[user_number] = {
-            "state": s_check or {"stage": None, "order": [], "total": 0, "last_item": None, "last_qty": 0, "last_confirmed_item": None, "pending_item": None, "spice_queue": [], "generic_queue": []},
-            "messages": [],
-            "lang": lang,
-        }
-        return "ok", 200
-    
     # 🤖 GLOBAL AI-POWERED FOOD INTENT DETECTION
     # Use OpenAI to detect if user is trying to order food (including off-menu items)
     # This catches requests like "1 pizza", "2 pasta", etc. BEFORE greeting logic
@@ -4830,10 +5011,34 @@ def whatsapp_webhook():
         return "ok", 200
     
     # Show welcome ONLY if: (1) first interaction with casual/greeting text, OR (2) greeting keywords anytime
-    # BUT skip welcome if it looks like an order or menu request!
+    # BUT skip welcome if it looks like an order, menu request, OR irrelevant message!
+    clean = (user_text or "").strip().lower()
+    
+    # ✅ FAILSAFE: Command Whitelist
+    # These words MUST NEVER be blocked as irrelevant
+    COMMAND_ALLOWLIST = ["finish", "cancel", "complete", "stop", "end", "done", "menu", "order", "items", "add more"]
+    is_command = any(cmd in clean for cmd in COMMAND_ALLOWLIST)
+
+    # DEBUG: Find which term matches (using word boundaries for English to avoid partial matches)
+    def check_irrelevant(t, text_to_check):
+        # For English, use word boundaries
+        if re.search(r'[a-zA-Z]', t):
+            return bool(re.search(rf"\b{re.escape(t)}\b", text_to_check))
+        # For Arabic, keep simple containment or improve if needed
+        return t in text_to_check
+
+    matched_term = next((k for k in IRRELEVANT_TERMS if check_irrelevant(k, clean)), None)
+    
+    # Safety override: If it looks like food, don't block it
+    has_food_safe = any(f in clean for f in ["burger", "sandwich", "coffee", "tea", "meal", "juice", "برجر", "ساندويتش", "قهوة", "شاي", "وجبة", "عصير", "potato", "بطاطس"])
+    is_irrelevant_guard = bool(matched_term) and not is_command and not has_food_safe
+    
+    if matched_term and is_irrelevant_guard:
+        print(f"🔍 DEBUG: Irrelevant term match: '{matched_term}' in '{clean}'")
+    
     if not from_button and (is_first_interaction or is_wa_greeting(user_text)):
-        # If it looks like an order/menu request, DON'T show welcome - let it be processed
-        if is_first_interaction and (looks_like_order_or_menu(user_text) or (is_voice and not is_wa_greeting(user_text))):
+        # If it looks like an order/menu request OR irrelevant, DON'T show welcome - let it be processed
+        if is_first_interaction and (looks_like_order_or_menu(user_text) or is_irrelevant_guard or (is_voice and not is_wa_greeting(user_text))):
             # Initialize session but don't show welcome - let order/menu processing handle it
             WHATSAPP_SESSIONS[user_number] = {
                 "state": {"stage": None, "order": [], "total": 0, "last_item": None, "last_qty": 0, 
@@ -4957,9 +5162,17 @@ def whatsapp_webhook():
 
         reply_html = result.get("reply") or ("Sorry, something went wrong." if lang == "en" else "عذراً، حدث خطأ ما.")
         reply_text = html_to_whatsapp(reply_html)
-
+        
         stage = result.get("stage")
         order = result.get("order") or []
+
+        # ✅ Check for IRRELEVANT signal from chat()
+        if result.get("irrelevant"):
+            print(f"👉 Sending category buttons for irrelevant message response")
+            # Send the refusal text FIRST, then the buttons
+            send_whatsapp_text(user_number, reply_text)
+            send_category_buttons(user_number, lang, show_image=False)
+            return "ok", 200
 
         if result.get("menu"):
             image_url = "https://qintellecttechnologies.com/joana_chatbot/static/menu.PNG"
@@ -5088,6 +5301,16 @@ def process_whatsapp_message(
 
         resp_obj = resp[0] if isinstance(resp, tuple) else resp
         data = resp_obj.get_json() or {}
+        
+        # ✅ SHOW BUTTONS IF IRRELEVANT
+        if data.get("irrelevant"):
+            # Send the text reply first (already handled by caller usually, but here we return data)
+            # wait, the caller sends 'reply' from data.
+            # We need to send buttons explicitly here or let caller do it?
+            # The caller of process_whatsapp_message is whatsapp_webhook.
+            # Let's pass the flag through.
+            pass
+
         return data
 
 
@@ -5154,6 +5377,97 @@ def chat():
 
     intent = detect_intent(msg)
     session["messages"].append({"role": "user", "content": msg})
+
+    # =========================================================
+    # 🚫 GLOBAL GUARD: IRRELEVANT / OFFENSIVE MESSAGES
+    # =========================================================
+    # This must run BEFORE any stage logic to intercept bad inputs
+    msg_low = (msg or "").lower()
+    order_count = len(s.get("order", []))
+    is_irrelevant = False
+
+    # 1. Direct match or containment of bad words (using word boundaries for English)
+    def is_bad_word(w, text_to_check):
+        if re.search(r'[a-zA-Z]', w):
+            return bool(re.search(rf"\b{re.escape(w)}\b", text_to_check))
+        return w in text_to_check
+
+    matched = next((k for k in IRRELEVANT_TERMS if is_bad_word(k, msg_low)), None)
+    if matched:
+        is_irrelevant = True
+        
+    # ✅ FAILSAFE: Command Whitelist (Always allow these)
+    COMMAND_ALLOWLIST = ["finish", "cancel", "complete", "stop", "end", "done", "menu", "order", "items", "add more"]
+    is_command = any(cmd in msg_low for cmd in COMMAND_ALLOWLIST)
+
+    # 2. Safety override: If the message ALSO contains menu keywords, assume it's an order attempt
+    has_food_keyword = any(f in msg_low for f in [
+        "burger", "sandwich", "coffee", "tea", "meal", "juice", "potato", "fries", "pepsi", "drink", "sides", "snack",
+        "برجر", "ساندويتش", "قهوة", "شاي", "وجبة", "عصير", "بطاطس", "مشروب"
+    ])
+    
+    # 3. Extra Safety: check if it's actually in our MENU
+    is_menu_item = bool(find_menu_item(msg_low))
+
+    if is_irrelevant and not has_food_keyword and not is_menu_item and not is_command:
+        print(f"🚫 BLOCKED IRRELEVANT MESSAGE: '{msg_low}'")
+        
+        # ✅ Build a Polite Response + Context Reminder
+        summary_lines, _ = build_order_summary_and_total(s.get("order") or [], lang)
+        
+        if order_count > 0:
+            # User has items -> Remind them of the order
+            if lang == "ar":
+                reply = (
+                    "عذراً، أنا هنا فقط لمساعدتك في طلب الطعام. 🍔\n\n"
+                    f"لديك *{order_count} أصناف* في طلبك الحالي:\n" + 
+                    "<br>".join(summary_lines) + 
+                    "\n\nهل ترغب في إضافة المزيد أم إتمام الطلب؟"
+                )
+            else:
+                reply = (
+                    "Apologies, I am here only to help you order food. 🍔\n\n"
+                    f"You have *{order_count} item(s)* in your current order:\n" + 
+                    "<br>".join(summary_lines) + 
+                    "\n\nWould you like to add more or finish your order?"
+                )
+        else:
+            # Empty cart -> Redirect to menu
+            if lang == "ar":
+                reply = (
+                    "عذراً، أنا هنا فقط لمساعدتك في طلب الطعام اللذيذ! 😋\n\n"
+                    "يمكنك طلب:\n"
+                    "🍔 برجر\n"
+                    "🥪 ساندويتشات\n"
+                    "🍹 عصائر ومشروبات\n\n"
+                    "ماذا تود أن تطلب اليوم؟"
+                )
+            else:
+                reply = (
+                    "Apologies, I am here only to help you order delicious food! 😋\n\n"
+                    "You can order:\n"
+                    "🍔 Burgers\n"
+                    "🥪 Sandwiches\n"
+                    "🍹 Juices & Drinks\n\n"
+                    "What would you like to order today?"
+                )
+        
+        # ✅ RESET STAGE to ensure this text reply is sent!
+        # If we leave it as "await_specific_burger", the webhook will ignore this text 
+        # and send the burger buttons again.
+        if order_count > 0:
+            s["stage"] = "add_more"
+        else:
+            s["stage"] = None # Back to menu
+            
+        session["state"] = s
+        # ✅ Return special signal to webhook to show category buttons
+        resp = make_chat_response(reply, lang)
+        # We need to attach the signal to the JSON response
+        data = resp.get_json()
+        data["irrelevant"] = True
+        return jsonify(data)
+
     
     # ✅ DEBUG: Log the key decision variables BEFORE multi-item check
     print(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
@@ -6990,29 +7304,6 @@ def chat():
             "Thank you for your time! We'll work on improving. 🙏"
         )
         session["state"] = {"stage": None, "order": [], "total": 0}
-        return make_chat_response(reply, lang)
-
-    # ✅ INTELLIGENT FALLBACK - Context-aware guidance
-    # Use current session state (not WhatsApp-specific)
-    order_count = len(s.get("order", []))
-
-    # 🚫 Guard against abusive queries only
-    msg_low = (msg or "").lower()
-    abusive_keywords = [
-        "stupid", "idiot", "dumb", "shut up", "fuck", "shit", "bitch",
-        "لعن", "قذر", "تافه"
-    ]
-    is_abusive = any(k in msg_low for k in abusive_keywords)
-
-    if is_abusive:
-        reply = (
-            "آسف، لا يمكنني المساعدة في ذلك. يمكن طلب عناصر القائمة فقط. الرجاء الاختيار من القائمة."
-            if lang == "ar" else
-            "Sorry, I can't assist with that. Only menu items can be ordered. Please choose from the menu."
-        )
-        # ✅ FIX: Don't call WhatsApp-specific functions from chat route
-        # The webhook will handle sending buttons based on response
-        session["state"] = s
         return make_chat_response(reply, lang)
 
     # ✅ CRITICAL FIX: For Arabic, try intelligent parsing BEFORE conversational fallback
