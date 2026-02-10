@@ -4664,12 +4664,19 @@ def whatsapp_webhook():
                 "messages": [],
                 "lang": lang,
             }
-            reply = (
-                "تم بدء طلب جديد! 🎉\n\nماذا تريد أن تطلب؟\n\n" + build_branches_message("ar")
-                if lang == "ar" else
-                "New order started! 🎉\n\nWhat would you like to order?\n\n" + build_branches_message("en")
+            
+            # Send welcome message with order method buttons (matching initial welcome flow)
+            buttons = (
+                [{"id": "order_text", "title": "الطلب عبر الرسائل"}, {"id": "order_voice", "title": "الطلب عبر الصوت"}]
+                if lang == "ar"
+                else [{"id": "order_text", "title": "Order via text"}, {"id": "order_voice", "title": "Order via voice"}]
             )
-            send_whatsapp_text(user_number, reply)
+            reply = (
+                "تم بدء طلب جديد! 🎉\n\n" + build_branches_message("ar")
+                if lang == "ar" else
+                "New order started! 🎉\n\n" + build_branches_message("en")
+            )
+            send_whatsapp_quick_buttons(user_number, reply, buttons)
             return "ok", 200
 
     # burger_more / sand_more pagination
