@@ -708,77 +708,100 @@ def _format_category_page(MENU: dict, cat: str, lang: str, page: int = 0, page_s
 def _start_next_generic_from_queue(s: dict, MENU: dict, lang: str):
     """
     Pops next generic (burger/sandwich/meals/juices/drinks) and shows appropriate prompt.
+    Also handles spice_queue if generic_queue is empty.
     Excludes already-ordered items from the menu display.
     """
     q = s.get("generic_queue") or []
-    if not q:
-        return None
-
-    first = q.pop(0)
-    s["generic_queue"] = q  # save back
-
-    kind = (first.get("kind") or "").strip().lower()
-    qty  = int(first.get("qty") or 1)
-
-    # store qty for selected specific item
-    s["last_qty"] = qty
-    s["last_kind"] = kind
-    s["cat_page"] = 0
     
-    # ✅ Get already-ordered items to exclude from menu
-    ordered_items = [item.get("item") for item in s.get("order", []) if item.get("item")]
+    # ✅ 1. Process Generic Queue first
+    if q:
+        first = q.pop(0)
+        s["generic_queue"] = q  # save back
 
-    if kind == "burger":
-        s["stage"] = "await_specific_burger"
-        s["burger_page"] = 0
-        ask_next = (
-            f"لديك {qty} برجر. اختر نوع البرجر:"
+        kind = (first.get("kind") or "").strip().lower()
+        qty  = int(first.get("qty") or 1)
+
+        # store qty for selected specific item
+        s["last_qty"] = qty
+        s["last_kind"] = kind
+        s["cat_page"] = 0
+        
+        # ✅ Get already-ordered items to exclude from menu
+        ordered_items = [item.get("item") for item in s.get("order", []) if item.get("item")]
+
+        if kind == "burger":
+            s["stage"] = "await_specific_burger"
+            s["burger_page"] = 0
+            ask_next = (
+                f"لديك {qty} برجر. اختر نوع البرجر:"
+                if lang == "ar"
+                else f"You ordered {qty} burger(s). Please choose which burger:"
+            )
+            return ask_next
+
+        if kind == "sandwich":
+            s["stage"] = "await_specific_sandwich"
+            s["sand_page"] = 0
+            ask_next = (
+                f"لديك {qty} ساندويتش. اختر نوع الساندويتش:"
+                if lang == "ar"
+                else f"You ordered {qty} sandwich(es). Please choose which sandwich:"
+            )
+            return ask_next
+
+        if kind == "meals":
+            s["stage"] = "await_specific_meal_text"
+            title = "Select a meal:" if lang != "ar" else "اختاري وجبة:"
+            body, chunk, _ = _format_category_page(MENU, "meals", lang, page=0)
+            s["last_page_keys"] = chunk or []
+            return f"{title}\n{body}"
+
+        if kind == "juices":
+            s["stage"] = "await_specific_juice_text"
+            title = "Select a juice:" if lang != "ar" else "اختاري عصير:"
+            body, chunk, _ = _format_category_page(MENU, "juices", lang, page=0)
+            s["last_page_keys"] = chunk or []
+            return f"{title}\n{body}"
+
+        if kind == "drinks":
+            s["stage"] = "await_specific_drink_text"
+            title = "Select a drink:" if lang != "ar" else "اختاري مشروب:"
+            # ✅ Exclude already-ordered drinks (e.g., coffee)
+            body, chunk, _ = _format_category_page(MENU, "drinks", lang, page=0, exclude_items=ordered_items)
+            s["last_page_keys"] = chunk or []
+            return f"{title}\n{body}"
+
+        if kind == "snacks_sides":
+            s["stage"] = "await_specific_side_text"
+            title = "Select a side/snack:" if lang != "ar" else "اختاري مقبلات/جانبي:"
+            body, chunk, _ = _format_category_page(MENU, "snacks_sides", lang, page=0)
+            s["last_page_keys"] = chunk or []
+            return f"{title}\n{body}"
+
+        # If unknown kind, skip and try next
+        return _start_next_generic_from_queue(s, MENU, lang)
+
+    # ✅ 2. If Generic Queue is empty, check Spice Queue
+    sq = s.get("spice_queue") or []
+    if sq:
+        nxt = sq.pop(0)
+        s["spice_queue"] = sq
+        
+        s["last_item"] = nxt["item"]
+        s["last_qty"] = int(nxt.get("qty") or 1)
+        s["stage"] = "await_spice"
+        
+        info = MENU.get(nxt["item"], {})
+        display_name = info.get("name_ar") if lang == "ar" else (info.get("name_en") or nxt["item"]).title()
+        
+        ask_spice = (
+            f"بالنسبة لـ {s['last_qty']} {display_name}، هل تفضلها حارة أم بدون حار؟"
             if lang == "ar"
-            else f"You ordered {qty} burger(s). Please choose which burger:"
+            else f"For your {s['last_qty']} {display_name}, would you like them spicy or non-spicy?"
         )
-        return ask_next
-
-    if kind == "sandwich":
-        s["stage"] = "await_specific_sandwich"
-        s["sand_page"] = 0
-        ask_next = (
-            f"لديك {qty} ساندويتش. اختر نوع الساندويتش:"
-            if lang == "ar"
-            else f"You ordered {qty} sandwich(es). Please choose which sandwich:"
-        )
-        return ask_next
-
-    if kind == "meals":
-        s["stage"] = "await_specific_meal_text"
-        title = "Select a meal:" if lang != "ar" else "اختاري وجبة:"
-        body, chunk, _ = _format_category_page(MENU, "meals", lang, page=0)
-        s["last_page_keys"] = chunk or []
-        return f"{title}\n{body}"
-
-    if kind == "juices":
-        s["stage"] = "await_specific_juice_text"
-        title = "Select a juice:" if lang != "ar" else "اختاري عصير:"
-        body, chunk, _ = _format_category_page(MENU, "juices", lang, page=0)
-        s["last_page_keys"] = chunk or []
-        return f"{title}\n{body}"
-
-    if kind == "drinks":
-        s["stage"] = "await_specific_drink_text"
-        title = "Select a drink:" if lang != "ar" else "اختاري مشروب:"
-        # ✅ Exclude already-ordered drinks (e.g., coffee)
-        body, chunk, _ = _format_category_page(MENU, "drinks", lang, page=0, exclude_items=ordered_items)
-        s["last_page_keys"] = chunk or []
-        return f"{title}\n{body}"
-
-    if kind == "snacks_sides":
-        s["stage"] = "await_specific_side_text"
-        title = "Select a side/snack:" if lang != "ar" else "اختاري مقبلات/جانبي:"
-        body, chunk, _ = _format_category_page(MENU, "snacks_sides", lang, page=0)
-        s["last_page_keys"] = chunk or []
-        return f"{title}\n{body}"
-
-    # If unknown kind, skip and try next
-    return _start_next_generic_from_queue(s, MENU, lang)
+        return ask_spice
+    
+    return None
     
     
     
