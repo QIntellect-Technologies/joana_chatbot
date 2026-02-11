@@ -718,8 +718,23 @@ def _start_next_generic_from_queue(s: dict, MENU: dict, lang: str):
         first = q.pop(0)
         s["generic_queue"] = q  # save back
 
-        kind = (first.get("kind") or "").strip().lower()
+        raw_kind = (first.get("kind") or "").strip().lower()
         qty  = int(first.get("qty") or 1)
+        
+        # ✅ Normalize kind to handle singular/plural variations from LLM
+        kind = raw_kind
+        if raw_kind in ("burger", "burgers", "burgers_meals"):
+            kind = "burger"
+        elif raw_kind in ("sandwich", "sandwiches", "wrap", "wraps", "tortilla"):
+            kind = "sandwich"
+        elif raw_kind in ("meal", "meals"):
+            kind = "meals"
+        elif raw_kind in ("juice", "juices"):
+            kind = "juices"
+        elif raw_kind in ("drink", "drinks", "beverage", "beverages"):
+            kind = "drinks"
+        elif raw_kind in ("side", "sides", "snack", "snacks", "snacks_sides"):
+            kind = "snacks_sides"
 
         # store qty for selected specific item
         s["last_qty"] = qty
