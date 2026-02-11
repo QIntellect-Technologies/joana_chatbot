@@ -323,6 +323,8 @@ def handle_multi_item_text(msg_raw, s, MENU, lang):
     specific_items = [it for it in all_items if it.get("type") == "specific"]
     added_lines = []
     
+    print(f"DEBUG: Processing {len(specific_items)} specific items: {specific_items}")
+
     for idx, spec in enumerate(specific_items):
         name = spec.get("name", "").strip()
         qty = spec.get("qty", 1)
@@ -330,11 +332,15 @@ def handle_multi_item_text(msg_raw, s, MENU, lang):
         category = spec.get("category", "")
         
         # Resolve to MENU key
-        resolved, _ = resolve_menu_item(name)
+        resolved, score = resolve_menu_item(name)
+        print(f"DEBUG: Resolved '{name}' -> '{resolved}' (score={score})")
+        
         if not resolved:
             continue
         
         price, cat = get_price_and_category(resolved)
+        print(f"DEBUG: '{resolved}' price={price}, cat='{cat}'")
+
         if price is None or price <= 0:
             continue
         
@@ -457,6 +463,7 @@ def handle_multi_item_text(msg_raw, s, MENU, lang):
         elif cat == "burgers_meals":
             s.setdefault("spice_queue", [])
             s["spice_queue"].append({"item": resolved, "qty": qty})
+            print(f"DEBUG: Added {resolved} to spice_queue: {s['spice_queue']}")
 
     # ✅ ADD ALL GENERICS TO QUEUE (priority: burgers/sandwiches FIRST for better UX, then food items)
     food_only = [
