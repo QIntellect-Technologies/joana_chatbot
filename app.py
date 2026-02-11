@@ -380,15 +380,7 @@ def handle_multi_item_text(msg_raw, s, MENU, lang):
         # ✅ AUTO-ADD specific items (Coffee, Pepsi, Sandwiches, etc.) - NO QUESTIONS
         # Sandwiches don't need spicy selection, auto-add them
         if cat not in ("burgers_meals",):
-            s.setdefault("order", [])
-            s["order"].append({
-                "item": resolved,
-                "qty": qty,
-                "spicy": 0,
-                "nonspicy": 0,
-                "price": float(price),
-                "subtotal": qty * float(price)
-            })
+            add_item_to_order_summary(s, resolved, qty, float(price), spicy=0, nonspicy=0)
             info = MENU.get(resolved, {})
             display_name = info.get("name_ar") if lang == "ar" else (info.get("name_en") or resolved).title()
             added_lines.append(f"{qty} {display_name}")
@@ -437,17 +429,9 @@ def handle_multi_item_text(msg_raw, s, MENU, lang):
                 
                 return make_chat_response(confirm_msg, lang)
             
-            s.setdefault("order", [])
             is_spicy = 1 if spicy == "spicy" else 0
             is_nonspicy = 1 if spicy in ("non-spicy", "nonspicy") else 0
-            s["order"].append({
-                "item": resolved,
-                "qty": qty,
-                "spicy": is_spicy,
-                "nonspicy": is_nonspicy,
-                "price": float(price),
-                "subtotal": qty * float(price)
-            })
+            add_item_to_order_summary(s, resolved, qty, float(price), spicy=is_spicy, nonspicy=is_nonspicy)
             info = MENU.get(resolved, {})
             display_name = info.get("name_ar") if lang == "ar" else (info.get("name_en") or resolved).title()
             spicy_label = " (Spicy)" if is_spicy else " (Non-Spicy)" if is_nonspicy else ""
@@ -2039,7 +2023,7 @@ def build_single_item_line(item, lang):
 
 
 def add_item_to_order_summary(state: dict, item_key: str, qty: int, price: float, spicy: int = 0, nonspicy: int = 0):
-    """Append a menu item to the in-memory order and keep totals updated."""
+    """Append a menu item to the in-memory order and keep totals updated. Merges identical items."""
     state.setdefault("order", [])
 
     try:
@@ -2052,15 +2036,30 @@ def add_item_to_order_summary(state: dict, item_key: str, qty: int, price: float
     except Exception:
         price_f = 0.0
 
-    line = {
-        "item": (item_key or "").strip().lower(),
-        "qty": qty_int,
-        "spicy": 1 if spicy else 0,
-        "nonspicy": 1 if nonspicy else 0,
-        "price": price_f,
-        "subtotal": qty_int * price_f,
-    }
-    state["order"].append(line)
+    # ✅ MERGE LOGIC: Check if identical item exists
+    item_key_clean = (item_key or "").strip().lower()
+    merged = False
+    
+    for existing in state["order"]:
+        if (existing.get("item") == item_key_clean and 
+            existing.get("spicy") == (1 if spicy else 0) and 
+            existing.get("nonspicy") == (1 if nonspicy else 0)):
+            
+            existing["qty"] += qty_int
+            existing["subtotal"] = existing["qty"] * price_f
+            merged = True
+            break
+            
+    if not merged:
+        line = {
+            "item": item_key_clean,
+            "qty": qty_int,
+            "spicy": 1 if spicy else 0,
+            "nonspicy": 1 if nonspicy else 0,
+            "price": price_f,
+            "subtotal": qty_int * price_f,
+        }
+        state["order"].append(line)
 
     # Keep running total handy
     _, total = build_order_summary_and_total(state.get("order") or [], state.get("lang", "en"))
@@ -2197,19 +2196,13 @@ def add_extracted_items_to_state(s: dict, extracted: list, lang: str):
         # burgers/meals need spice
         if category == "burgers_meals":
             if spicy_pref in ("spicy", "hot"):
-                s["order"].append({
-                    "item": name, "qty": qty, "spicy": 1, "nonspicy": 0,
-                    "price": price, "subtotal": qty * price
-                })
+                add_item_to_order_summary(s, name, qty, price, spicy=1, nonspicy=0)
                 added_lines.append(build_single_item_line({
                     "item": name, "qty": qty, "spicy": 1, "nonspicy": 0
                 }, lang))
 
             elif spicy_pref in ("non-spicy", "nonspicy", "mild", "not spicy", "no spicy"):
-                s["order"].append({
-                    "item": name, "qty": qty, "spicy": 0, "nonspicy": 1,
-                    "price": price, "subtotal": qty * price
-                })
+                add_item_to_order_summary(s, name, qty, price, spicy=0, nonspicy=1)
                 added_lines.append(build_single_item_line({
                     "item": name, "qty": qty, "spicy": 0, "nonspicy": 1
                 }, lang))
@@ -2221,10 +2214,7 @@ def add_extracted_items_to_state(s: dict, extracted: list, lang: str):
             continue
 
         # non-burger: direct add
-        s["order"].append({
-            "item": name, "qty": qty, "spicy": 0, "nonspicy": 0,
-            "price": price, "subtotal": qty * price
-        })
+        add_item_to_order_summary(s, name, qty, price, spicy=0, nonspicy=0)
         added_lines.append(build_single_item_line({
             "item": name, "qty": qty, "spicy": 0, "nonspicy": 0
         }, lang))
@@ -2771,14 +2761,7 @@ def add_non_generic_items_to_order(state: dict, msg: str, lang: str):
             print("⚠ Skipped item (price missing):", en)
             continue
 
-        state["order"].append({
-            "item": resolved,
-            "qty": qty,
-            "spicy": 0,
-            "nonspicy": 0,
-            "price": float(price),
-            "subtotal": qty * float(price)
-        })
+        add_item_to_order_summary(state, resolved, qty, float(price), spicy=0, nonspicy=0)
 
         # ✅ build user-facing added lines from resolved menu info
         info = MENU.get(resolved, {}) or {}
@@ -6460,7 +6443,7 @@ def chat():
         # User confirmed - add the large order
         if any(confirm in msg_clean for confirm in ["yes", "y", "نعم", "تأكيد", "موافق", "ok"]):
             s.setdefault("order", [])
-            s["order"].append(pending)
+            add_item_to_order_summary(s, pending["item"], pending["qty"], pending["price"], spicy=pending.get("spicy"), nonspicy=pending.get("nonspicy"))
             
             info = MENU.get(pending["item"], {})
             display_name = info.get("name_ar") if lang == "ar" else (info.get("name_en") or pending["item"]).title()
@@ -6555,14 +6538,7 @@ def chat():
                         # Normal quantity - add directly with proper spicy info
                         is_spicy = 1 if spicy_info == "spicy" else 0
                         is_nonspicy = 1 if spicy_info in ("non-spicy", "nonspicy") else 0
-                        s["order"].append({
-                            "item": resolved,
-                            "qty": qty,
-                            "spicy": is_spicy,
-                            "nonspicy": is_nonspicy,
-                            "price": float(price),
-                            "subtotal": qty * float(price)
-                        })
+                        add_item_to_order_summary(s, resolved, qty, float(price), spicy=is_spicy, nonspicy=is_nonspicy)
                 
                 # ✅ After all specific items processed, handle spice queue or generics
                 # Check if there are burgers waiting for spice selection
@@ -6861,7 +6837,7 @@ def chat():
         if is_non_menu_item_request(msg):
             # Complete current burger with default non-spicy
             price, _ = get_price_and_category(last_item)
-            s["order"].append({"item": last_item, "qty": last_qty, "spicy": 0, "nonspicy": 1, "price": price, "subtotal": last_qty * price})
+            add_item_to_order_summary(s, last_item, last_qty, price, spicy=0, nonspicy=1)
             s["last_confirmed_item"] = {"item": last_item, "qty": last_qty, "spicy": 0, "nonspicy": 1, "price": price}
             s["last_item"] = None
             s["last_qty"] = 0
@@ -6904,7 +6880,7 @@ def chat():
         if is_new_order:
             # First, complete the current spice question with default (non-spicy)
             price, _ = get_price_and_category(last_item)
-            s["order"].append({"item": last_item, "qty": last_qty, "spicy": 0, "nonspicy": 1, "price": price, "subtotal": last_qty * price})
+            add_item_to_order_summary(s, last_item, last_qty, price, spicy=0, nonspicy=1)
             s["last_confirmed_item"] = {"item": last_item, "qty": last_qty, "spicy": 0, "nonspicy": 1, "price": price}
             s["last_item"] = None
             s["last_qty"] = 0
@@ -6928,9 +6904,9 @@ def chat():
                     spicy_q, non_q = 0, last_qty
 
             if spicy_q > 0:
-                s["order"].append({"item": last_item, "qty": spicy_q, "spicy": 1, "nonspicy": 0, "price": price, "subtotal": spicy_q * price})
+                add_item_to_order_summary(s, last_item, spicy_q, price, spicy=1, nonspicy=0)
             if non_q > 0:
-                s["order"].append({"item": last_item, "qty": non_q, "spicy": 0, "nonspicy": 1, "price": price, "subtotal": non_q * price})
+                add_item_to_order_summary(s, last_item, non_q, price, spicy=0, nonspicy=1)
 
             s["last_confirmed_item"] = {"item": last_item, "qty": last_qty, "spicy": 1 if spicy_q > 0 else 0, "nonspicy": 1 if non_q > 0 else 0, "price": price}
 
