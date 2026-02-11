@@ -323,8 +323,6 @@ def handle_multi_item_text(msg_raw, s, MENU, lang):
     specific_items = [it for it in all_items if it.get("type") == "specific"]
     added_lines = []
     
-    print(f"DEBUG: Processing {len(specific_items)} specific items: {specific_items}")
-
     for idx, spec in enumerate(specific_items):
         name = spec.get("name", "").strip()
         qty = spec.get("qty", 1)
@@ -332,15 +330,11 @@ def handle_multi_item_text(msg_raw, s, MENU, lang):
         category = spec.get("category", "")
         
         # Resolve to MENU key
-        resolved, score = resolve_menu_item(name)
-        print(f"DEBUG: Resolved '{name}' -> '{resolved}' (score={score})")
-        
+        resolved, _ = resolve_menu_item(name)
         if not resolved:
             continue
         
         price, cat = get_price_and_category(resolved)
-        print(f"DEBUG: '{resolved}' price={price}, cat='{cat}'")
-
         if price is None or price <= 0:
             continue
         
@@ -463,7 +457,6 @@ def handle_multi_item_text(msg_raw, s, MENU, lang):
         elif cat == "burgers_meals":
             s.setdefault("spice_queue", [])
             s["spice_queue"].append({"item": resolved, "qty": qty})
-            print(f"DEBUG: Added {resolved} to spice_queue: {s['spice_queue']}")
 
     # ✅ ADD ALL GENERICS TO QUEUE (priority: burgers/sandwiches FIRST for better UX, then food items)
     food_only = [
@@ -486,18 +479,6 @@ def handle_multi_item_text(msg_raw, s, MENU, lang):
     if all_generics_ordered:
         s.setdefault("generic_queue", [])
         s["generic_queue"].extend(all_generics_ordered)
-        
-        # Start processing first generic from queue
-        prompt = _start_next_generic_from_queue(s, MENU, lang)
-        session["state"] = s
-
-        if prompt:
-            prefix = (
-                ("تمت إضافة: " + "، ".join(added_lines) + "<br><br>")
-                if added_lines and lang == "ar"
-                else ("Added: " + ", ".join(added_lines) + "<br><br>" if added_lines else "")
-            )
-            return make_chat_response(prefix + prompt, lang)
 
     # prefix (show what was added before asking next question)
     prefix = (
@@ -507,7 +488,6 @@ def handle_multi_item_text(msg_raw, s, MENU, lang):
     )
 
     # ✅ OLD BURGER/SANDWICH SPECIFIC HANDLING (now redundant, kept for safety)
-    # This section should never execute if all_generics_ordered worked
     bs_only_fallback = [
         g for g in (generics or [])
         if (g.get("kind") in ("burger", "sandwich")) and g not in all_generics_ordered
@@ -516,33 +496,8 @@ def handle_multi_item_text(msg_raw, s, MENU, lang):
     if bs_only_fallback:
         s.setdefault("generic_queue", [])
         s["generic_queue"].extend(bs_only_fallback)
-        nxt = s["generic_queue"].pop(0)
 
-        s["last_qty"] = int(nxt.get("qty") or 1)
-        print(f"🔍 DEBUG [generic_queue pop]: Setting last_qty={s['last_qty']} for kind={nxt.get('kind')}")
-        s["last_item"] = None
-
-        if nxt.get("kind") == "burger":
-            s["stage"] = "await_specific_burger"
-            s["burger_page"] = 0
-            ask = (
-                f"لديك {s['last_qty']} برجر. اختر نوع البرجر."
-                if lang == "ar"
-                else f"You ordered {s['last_qty']} burger(s). Please choose which burger."
-            )
-        else:
-            s["stage"] = "await_specific_sandwich"
-            s["sand_page"] = 0
-            ask = (
-                f"لديك {s['last_qty']} ساندويتش. اختر نوع الساندويتش."
-                if lang == "ar"
-                else f"You ordered {s['last_qty']} sandwich(es). Please choose which sandwich."
-            )
-
-        session["state"] = s
-        return make_chat_response(prefix + ask, lang)
-
-    # ✅ If we have burgers needing spice → ask spice NOW
+    # ✅ If we have burgers needing spice → ask spice NOW (PRIORITY!)
     if s.get("spice_queue"):
         nxt = s["spice_queue"].pop(0)
         s["last_item"] = nxt["item"]
