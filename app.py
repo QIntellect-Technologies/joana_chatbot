@@ -6378,7 +6378,8 @@ def chat():
         return make_chat_response(greeting_reply, lang)
 
     # ✅ ORDER_START INTENT - Handle "I want to order", "can I order", etc.
-    if intent == "order_start":
+    # CRITICAL: Only show menu if NO items are detected in the text.
+    if intent == "order_start" and not looks_like_multi_item_text(msg_raw):
         # Check if a specific category was mentioned
         detected_cat = detect_category_from_text(msg)
         if detected_cat:
