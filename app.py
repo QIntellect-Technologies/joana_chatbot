@@ -6335,7 +6335,7 @@ def chat():
             lang
         )
 
-    if intent == "menu":
+    if intent == "menu" and not (from_button and msg_l.startswith("item_")):
         reply = "Here’s our menu! Please place your order." if lang == "en" else "هذه قائمتنا! من فضلك ضع طلبك."
         return make_chat_response(reply, lang, menu="/static/menu.PNG")
 
