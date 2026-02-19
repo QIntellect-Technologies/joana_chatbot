@@ -3371,7 +3371,7 @@ def apply_cancel_on_order(state: dict, cancel_req: dict, lang: str, return_parts
 def send_category_buttons(user_number: str, lang: str = "en", show_image: bool = True):
     caption = "Here is our menu" if lang == "en" else "هذه قائمتنا"
     if show_image:
-        image_url = "https://qintellecttechnologies.com/joana_chatbot/static/menu.PNG"
+        image_url = "https://joanachatbot-production.up.railway.app/static/menu.PNG"
         send_whatsapp_image(user_number, image_url, caption=caption)
 
     if lang == "ar":
@@ -5230,7 +5230,7 @@ def whatsapp_webhook():
             return "ok", 200
 
         if result.get("menu"):
-            image_url = "https://qintellecttechnologies.com/joana_chatbot/static/menu.PNG"
+            image_url = "https://joanachatbot-production.up.railway.app/static/menu.PNG"
             send_whatsapp_image(user_number, image_url, caption=("Here is our menu" if lang == "en" else "هذه قائمتنا"))
 
         if stage == "await_specific_burger":
