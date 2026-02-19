@@ -1842,6 +1842,34 @@ def is_asking_for_categories(text: str) -> bool:
     return any(k in text_l for k in cat_keywords)
 
 
+CATEGORY_GROUP_MAP = {
+    "burgers": "burgers_meals",
+    "meals": "burgers_meals",
+    "sandwiches": "sandwiches",
+    "sides": "snacks_sides",
+    "drinks": "drinks"
+}
+
+
+def has_explicit_quantity(text: str) -> bool:
+    """Check if the text contain digits or number words (English/Arabic)."""
+    if not text: return False
+    t = text.lower()
+    # Digits
+    if re.search(r"\d+", t): return True
+    # English words
+    eng_nums = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
+    if any(re.search(r"\b" + n + r"\b", t) for n in eng_nums): return True
+    # Arabic words
+    ar_nums = [
+        "واحد", "اثنين", "اثنتين", "ثلاثة", "ثلاث", "أربعة", "أربع",
+        "خمسة", "خمس", "ستة", "ست", "سبعة", "سبع", "ثمانية", "ثمان",
+        "تسعة", "تسع", "عشرة", "عشر"
+    ]
+    if any(n in t for n in ar_nums): return True
+    return False
+
+
 def polite_check(text):
     bad = ["idiot", "stupid", "لعنة", "غبي"]
     return any(w in (text or "").lower() for w in bad)
@@ -2804,8 +2832,9 @@ def has_non_generic_menu_item(msg: str) -> bool:
 
     for _, info in MENU.items():
         cat = (info.get("category") or "").lower()
-        if cat in ("burgers_meals", "sandwiches"):
-            continue
+        # REMOVED: cat in ("burgers_meals", "sandwiches") skip to allow detecting these items in generic text
+        # if cat in ("burgers_meals", "sandwiches"):
+        #     continue
 
         en = (info.get("name_en") or "").strip().lower()
         ar = (info.get("name_ar") or "").strip().lower()
@@ -2831,8 +2860,9 @@ def add_non_generic_items_to_order(state: dict, msg: str, lang: str):
 
     for _, info in MENU.items():
         cat = (info.get("category") or "").lower()
-        if cat in ("burgers_meals", "sandwiches"):
-            continue
+        # REMOVED: category skip
+        # if cat in ("burgers_meals", "sandwiches"):
+        #     continue
 
         en = (info.get("name_en") or "").strip().lower()
         ar = (info.get("name_ar") or "").strip().lower()
@@ -6402,14 +6432,7 @@ def chat():
         detected_cat = detect_category_from_text(msg)
         if detected_cat:
             # Map to Group ID
-            GROUP_MAP = {
-                "burgers": "burgers_meals",
-                "meals": "burgers_meals",
-                "sandwiches": "sandwiches",
-                "sides": "snacks_sides",
-                "drinks": "drinks"
-            }
-            internal_cat = GROUP_MAP.get(detected_cat, detected_cat)
+            internal_cat = CATEGORY_GROUP_MAP.get(detected_cat, detected_cat)
             
             return jsonify({
                 "reply": "", 
@@ -6470,17 +6493,14 @@ def chat():
         # 2. DECISION LOGIC
         # If it looks like multi-item BUT has no digits/quantities AND a category is detected -> Prefer Category
         # Example: "burgers and meals" -> has "and" (multi=True), no digits, cat="burgers" -> Open Category
-        # Example: "2 beef burgers" -> has digits -> Multi-Item
-        if is_multi_item and not has_digits and detected_cat:
+        # BUT if it has number words like "one" or "two", or mentions specific items, skip category override.
+        # Example: "one chicken burger and one beef burger" -> has_quantity=True -> skip category override
+        has_qty = has_explicit_quantity(msg_raw)
+        has_specific = has_non_generic_menu_item(msg_raw)
+
+        if is_multi_item and not has_qty and not has_specific and detected_cat:
              # Map to Group ID
-             GROUP_MAP = {
-                "burgers": "burgers_meals",
-                "meals": "burgers_meals",
-                "sandwiches": "sandwiches",
-                "sides": "snacks_sides",
-                "drinks": "drinks"
-             }
-             internal_cat = GROUP_MAP.get(detected_cat, detected_cat)
+             internal_cat = CATEGORY_GROUP_MAP.get(detected_cat, detected_cat)
 
              return jsonify({
                 "reply": "", 
@@ -6495,14 +6515,7 @@ def chat():
         else:
             # 3. Check for specific category (if not multi-item)
             if detected_cat:
-                GROUP_MAP = {
-                    "burgers": "burgers_meals",
-                    "meals": "burgers_meals",
-                    "sandwiches": "sandwiches",
-                    "sides": "snacks_sides",
-                    "drinks": "drinks"
-                }
-                internal_cat = GROUP_MAP.get(detected_cat, detected_cat)
+                internal_cat = CATEGORY_GROUP_MAP.get(detected_cat, detected_cat)
 
                 return jsonify({
                     "reply": "", 
