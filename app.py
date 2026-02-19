@@ -6418,13 +6418,38 @@ def chat():
     # 2. Category mentioned? -> Open Category (e.g. "I want burgers")
     # 3. Neither? -> Show Generic Menu (e.g. "I want to order")
     if intent in ("order_start", "browse_category"):
-        # 1. Check if it looks like a multi-item order
-        # If true, PASS so it falls through to the multi-item handler below
-        if looks_like_multi_item_text(msg_raw):
-            pass
+        # 1. Analyze the message structure
+        is_multi_item = looks_like_multi_item_text(msg_raw)
+        has_digits = any(c.isdigit() for c in msg_raw)
+        # Check for number words (one, two, etc) logic could be added here if needed, 
+        # but looks_like_multi_item_text partially handles that or we rely on digits.
+        
+        detected_cat = detect_category_from_text(msg)
+
+        # 2. DECISION LOGIC
+        # If it looks like multi-item BUT has no digits/quantities AND a category is detected -> Prefer Category
+        # Example: "burgers and meals" -> has "and" (multi=True), no digits, cat="burgers" -> Open Category
+        # Example: "2 beef burgers" -> has digits -> Multi-Item
+        if is_multi_item and not has_digits and detected_cat:
+             return jsonify({
+                "reply": "", 
+                "action": "open_category",
+                "category": detected_cat,
+                "lang": lang
+            })
+            
+        # Standard Multi-Item Check
+        if is_multi_item:
+            pass # Fall through to multi-item handler
         else:
-            # 2. Check if a specific category was mentioned
-            detected_cat = detect_category_from_text(msg)
+            # 3. Check for specific category (if not multi-item)
+            if detected_cat:
+                return jsonify({
+                    "reply": "", 
+                    "action": "open_category",
+                    "category": detected_cat,
+                    "lang": lang
+                })
             if detected_cat:
                 return jsonify({
                     "reply": "", 

@@ -96,6 +96,7 @@ MENU_BROWSING_PATTERNS = [
     "what do you have on the menu", "what items do you have",
     "what food do you have", "what food do you serve",
     "what dishes do you have", "what do you offer", "what do you sell",
+    "do you have", "do you get", "have you got",
 ]
 
 # Order intent patterns - I want to order, can I order, etc.
