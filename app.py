@@ -6450,14 +6450,6 @@ def chat():
                     "category": detected_cat,
                     "lang": lang
                 })
-            if detected_cat:
-                return jsonify({
-                    "reply": "", 
-                    "action": "open_category",
-                    "category": detected_cat,
-                    "lang": lang
-                })
-
             # 3. Show Generic Menu
             order_start_reply = (
                 "بالتأكيد! يمكنك الطلب الآن! 🎉\n\n"
