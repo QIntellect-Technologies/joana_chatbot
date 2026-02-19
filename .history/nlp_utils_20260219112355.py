@@ -165,11 +165,6 @@ FINISH_ORDER_PATTERNS = [
     "check total", "see total", "get total", "calculate total",
 ]
 
-DELIVERY_PATTERNS = [
-    "delivery", "do you deliver", "is there delivery", "have delivery",
-    "shipping", "ship", "deliver", "home delivery",
-]
-
 # ============================================
 # COMPREHENSIVE INTENT PATTERNS (ARABIC)
 # ============================================
@@ -229,11 +224,6 @@ FINISH_ORDER_PATTERNS_AR = [
     "دفع", "سداد", "خلاص", "خلصنا", "تم الطلب", "كذا تمام",
     "بس كذا", "هذا كل شي", "هذا الطلب", "اكدي الطلب", "تاكيد الطلب",
     "المجموع", "كم المجموع", "كم الحساب", "كم الفاتورة",
-]
-
-DELIVERY_PATTERNS_AR = [
-    "توصيل", "عندكم توصيل", "فيه توصيل", "توصلون", "خدمة التوصيل",
-    "توصيل طلبات", "يوصل", "توصل",
 ]
 
 # ============================================
@@ -833,11 +823,6 @@ def detect_intent(text: str) -> str:
     for pattern in FINISH_ORDER_PATTERNS + FINISH_ORDER_PATTERNS_AR:
         if pattern.lower() in text_lower:
             return "finish"
-
-    # 3.5) Check for delivery patterns
-    for pattern in DELIVERY_PATTERNS + DELIVERY_PATTERNS_AR:
-        if pattern.lower() in text_lower:
-            return "delivery"
     
     # 4) Check for order intent patterns
     for pattern in ORDER_INTENT_PATTERNS + ORDER_INTENT_PATTERNS_AR:

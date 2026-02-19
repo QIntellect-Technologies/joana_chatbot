@@ -10,7 +10,7 @@ from zoneinfo import ZoneInfo
 
 import pandas as pd
 from flask import Flask, render_template, request, jsonify, session
-from nlp_utils import detect_intent, detect_language, detect_category_from_text
+from nlp_utils import detect_intent, detect_language
 from openai import OpenAI
 from dotenv import load_dotenv
 
@@ -1052,9 +1052,6 @@ def _start_next_generic(s: dict, MENU: dict, lang: str):
 # ---------------------------
 # ENV VARIABLES
 # ---------------------------
-# Groq API (OpenAI-compatible, faster and cheaper)
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-# Fallback to OpenAI if Groq not available
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 FLASK_SECRET = os.getenv("FLASK_SECRET_KEY", "joana_fastfood_secret")
 
@@ -1095,37 +1092,19 @@ def _mask(val: str | None) -> str:
 app = Flask(__name__, static_folder="static", template_folder="templates")
 app.secret_key = FLASK_SECRET
 
-# Prioritize Groq API (faster, cheaper) over OpenAI
-if GROQ_API_KEY:
-    tail = GROQ_API_KEY[-4:] if len(GROQ_API_KEY) >= 4 else "****"
-    print(f"GROQ_API_KEY detected (length={len(GROQ_API_KEY)}, masked=***{tail})")
-    client = OpenAI(
-        api_key=GROQ_API_KEY,
-        base_url="https://api.groq.com/openai/v1"
-    )
-    LLM_MODEL = "llama-3.3-70b-versatile"  # Groq's fast model
-    LLM_PROVIDER = "groq"
-    print(f"✅ Using Groq API with model: {LLM_MODEL}")
-elif OPENAI_API_KEY:
+if not OPENAI_API_KEY:
+    print("Warning: OPENAI_API_KEY is not set; OpenAI requests will fail until it is configured.")
+    client = None
+else:
     tail = OPENAI_API_KEY[-4:] if len(OPENAI_API_KEY) >= 4 else "****"
     print(f"OPENAI_API_KEY detected (length={len(OPENAI_API_KEY)}, masked=***{tail})")
     client = OpenAI(api_key=OPENAI_API_KEY)
-    LLM_MODEL = "gpt-4o-mini"
-    LLM_PROVIDER = "openai"
-    print(f"✅ Using OpenAI API with model: {LLM_MODEL}")
-else:
-    print("Warning: No LLM API key set (GROQ_API_KEY or OPENAI_API_KEY). AI features will be disabled.")
-    client = None
-    LLM_MODEL = None
-    LLM_PROVIDER = None
 
 
 def log_env_summary():
     print(
         "ENV STATUS ->",
-        f"GROQ_API_KEY={_mask(GROQ_API_KEY)} |",
         f"OPENAI_API_KEY={_mask(OPENAI_API_KEY)} |",
-        f"LLM_PROVIDER={LLM_PROVIDER} |",
         f"SUPABASE_SERVICE_ROLE_KEY={_mask(SUPABASE_SERVICE_ROLE_KEY)} |",
         f"WHATSAPP_TOKEN={_mask(WHATSAPP_TOKEN)} |",
         f"DEEPGRAM_API_KEY={_mask(DEEPGRAM_API_KEY)}",
@@ -2324,7 +2303,7 @@ def detect_spicy_nonspicy(msg: str):
     text = msg.lower().replace("_", " ").replace("-", " ")
     nonspicy_keywords_en = [
         "non spicy", "non-spicy", "no spicy", "without spicy", "without spice",
-        "not spicy", "mild", "regular", "normal", "classic", "original"
+        "not spicy", "mild",
     ]
     nonspicy_keywords_ar = ["بدون حار", "بدون حر", "عادي", "بدون"]
     nonspicy_flag = any(k in text for k in nonspicy_keywords_en + nonspicy_keywords_ar)
@@ -2575,7 +2554,7 @@ def check_if_irrelevant_question(msg: str, lang: str = "en") -> dict:
     
     try:
         res = client.chat.completions.create(
-            model=LLM_MODEL,
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": msg}
@@ -3235,24 +3214,8 @@ def apply_cancel_on_order(state: dict, cancel_req: dict, lang: str, return_parts
         return False, msg
 
     matches = []
-    matches = []
-    # Resolve the cancel request item key 
-    cancel_item_key, _ = resolve_menu_item(item)
-    
     for idx, line in enumerate(order):
-        line_item_name = line.get("item") or ""
-        # Resolve the order line item key
-        line_item_key, _ = resolve_menu_item(line_item_name)
-        
-        # Compare resolved keys (handles "Zinger" vs "Zinger Meal" vs "Chicken Burger" if mapped)
-        # Fallback to direct string compare if resolution fails
-        match_found = False
-        if cancel_item_key and line_item_key and cancel_item_key == line_item_key:
-            match_found = True
-        elif line_item_name.lower() == item.lower():
-            match_found = True
-            
-        if not match_found:
+        if (line.get("item") or "").lower() != item.lower():
             continue
         matches.append((idx, line))
 
@@ -3596,7 +3559,7 @@ def get_llm_reply(msg, lang="en"):
 
     try:
         res = client.chat.completions.create(
-            model=LLM_MODEL,
+            model="gpt-4o-mini",
             messages=messages,
             temperature=0.5,
             max_tokens=250,
@@ -3685,13 +3648,14 @@ def correct_arabic_typos_with_ai(msg: str) -> str:
     
     try:
         res = client.chat.completions.create(
-            model=LLM_MODEL,  # Fast model for typo correction
+            model="gpt-4o-mini",  # Fast and cheap for typo correction
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": msg}
             ],
             temperature=0.2,  # Low temp for consistent corrections
             max_tokens=200,
+            timeout=3,  # Fast timeout to avoid delays
         )
         
         corrected = (res.choices[0].message.content or "").strip()
@@ -4011,7 +3975,7 @@ def parse_intelligent_order(msg: str, lang: str = "en") -> dict:
         )
         
         res = client.chat.completions.create(
-            model=LLM_MODEL,  # Using configured LLM provider
+            model="gpt-4o",  # ✅ UPGRADED from gpt-4o-mini for better accuracy
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": msg}
@@ -4214,17 +4178,12 @@ def transcribe_audio_from_cloud(media_id: str, priority_lang=None) -> str:
             temp_audio_path = f.name
         print(f"💾 Saved audio to: {temp_audio_path} (format: {file_ext})")
 
-        # Step 4: Transcribe using OpenAI or Groq Whisper API
-        # Determine model based on provider
-        audio_model = "whisper-1"
-        if LLM_PROVIDER == "groq":
-            audio_model = "whisper-large-v3"
-            
-        print(f"🤖 Sending to {str(LLM_PROVIDER).upper()} Whisper API (model={audio_model})...")
+        # Step 4: Transcribe using OpenAI Whisper API
+        print(f"🤖 Sending to OpenAI Whisper API...")
         try:
             with open(temp_audio_path, "rb") as audio_file:
                 transcript = client.audio.transcriptions.create(
-                    model=audio_model,
+                    model="whisper-1",
                     file=audio_file,
                     response_format="text",
                     language=None, # Auto-detect but guided by prompt
@@ -4972,7 +4931,7 @@ def whatsapp_webhook():
                 )
                 
                 classify_res = client.chat.completions.create(
-                    model=LLM_MODEL,
+                    model="gpt-4o-mini",
                     messages=[{"role": "user", "content": classify_prompt}],
                     temperature=0,
                     max_tokens=10
@@ -5255,24 +5214,6 @@ def whatsapp_webhook():
             from_button=from_button,
             customer_id=customer_id,
         )
-
-        # ✅ Handle open_category action (from order_start intent)
-        if result.get("action") == "open_category":
-            cat = result.get("category")
-            # Map to internal keys
-            mapping = {
-                "burgers": "burgers_meals",
-                "meals": "burgers_meals", 
-                "sandwiches": "sandwiches",
-                "sides": "snacks_sides",
-                "drinks": "drinks",
-                "juices": "juices"
-            }
-            internal_cat = mapping.get(cat, cat)
-            
-            WA_CATEGORY_STATE[user_number] = {"category": internal_cat, "index": 0}
-            send_items_for_category(user_number, internal_cat, lang)
-            return "ok", 200
 
         reply_html = result.get("reply") or ("Sorry, something went wrong." if lang == "en" else "عذراً، حدث خطأ ما.")
         reply_text = html_to_whatsapp(reply_html)
@@ -6374,17 +6315,7 @@ def chat():
             lang
         )
 
-    if intent == "menu" and not (from_button and msg_l.startswith("item_")):
-        # 1. Check for specific category request (e.g. "Do you have drinks?")
-        detected_cat = detect_category_from_text(msg)
-        if detected_cat:
-            return jsonify({
-                "reply": "", 
-                "action": "open_category",
-                "category": detected_cat,
-                "lang": lang
-            })
-
+    if intent == "menu":
         reply = "Here’s our menu! Please place your order." if lang == "en" else "هذه قائمتنا! من فضلك ضع طلبك."
         return make_chat_response(reply, lang, menu="/static/menu.PNG")
 
@@ -6403,45 +6334,16 @@ def chat():
         )
         return make_chat_response(greeting_reply, lang)
 
-    # ✅ DELIVERY INTENT
-    if intent == "delivery":
-        reply = (
-            "نعم، لدينا خدمة توصيل! 🚗💨\nيمكنك الطلب الآن وسنقوم بتوصيله إليك.\n\nماذا تود أن تطلب؟"
+    # ✅ ORDER_START INTENT - Handle "I want to order", "can I order", etc.
+    if intent == "order_start":
+        order_start_reply = (
+            "بالتأكيد! يمكنك الطلب الآن! 🎉\n\n"
+            "📋 هذه قائمتنا! اختر ما تريد:"
             if lang == "ar" else
-            "Yes, we have delivery service! 🚗💨\nYou can place your order now and we'll deliver it to you.\n\nWhat would you like to order?"
+            "Of course! You can order now! 🎉\n\n"
+            "📋 Here's our menu! Choose what you'd like:"
         )
-        return make_chat_response(reply, lang)
-
-    # ✅ ORDER_START / BROWSE_CATEGORY INTENT
-    # PRIORITIES:
-    # 1. Items mentioned? -> Fall through to multi-item handler (e.g. "I want 2 burgers")
-    # 2. Category mentioned? -> Open Category (e.g. "I want burgers")
-    # 3. Neither? -> Show Generic Menu (e.g. "I want to order")
-    if intent in ("order_start", "browse_category"):
-        # 1. Check if it looks like a multi-item order
-        # If true, PASS so it falls through to the multi-item handler below
-        if looks_like_multi_item_text(msg_raw):
-            pass
-        else:
-            # 2. Check if a specific category was mentioned
-            detected_cat = detect_category_from_text(msg)
-            if detected_cat:
-                return jsonify({
-                    "reply": "", 
-                    "action": "open_category",
-                    "category": detected_cat,
-                    "lang": lang
-                })
-
-            # 3. Show Generic Menu
-            order_start_reply = (
-                "بالتأكيد! يمكنك الطلب الآن! 🎉\n\n"
-                "📋 هذه قائمتنا! اختر ما تريد:"
-                if lang == "ar" else
-                "Of course! You can order now! 🎉\n\n"
-                "📋 Here's our menu! Choose what you'd like:"
-            )
-            return make_chat_response(order_start_reply, lang, menu="/static/menu.PNG")
+        return make_chat_response(order_start_reply, lang, menu="/static/menu.PNG")
 
 
 
@@ -6946,19 +6848,7 @@ def chat():
         s["pending_item"] = None
 
         # ✅ CRITICAL FIX: Actually ADD the item to the order!
-        
-        # 🌶️ SPICY CHECK: Only ask for these specific items
-        SPICY_ITEMS = {
-            "chicken burger", "beef burger", "crispy burger",
-            "chicken burger meal", "beef burger meal", "crispy burger meal"
-        }
-        
-        should_ask_spice = (
-            category == "burgers_meals" and 
-            pending.lower().strip() in SPICY_ITEMS
-        )
-
-        if should_ask_spice:
+        if category == "burgers_meals":
             # For burgers, queue for spice question - will be added after spice selection
             s["stage"] = "await_spice"
             session["state"] = s
@@ -7006,46 +6896,11 @@ def chat():
         if category != "burgers_meals":
             reply = "من فضلك اختر برجر صحيح من القائمة." if lang == "ar" else "Please choose a valid burger from the menu."
             return make_chat_response(reply, lang)
-        # 🌶️ SPICY CHECK: Only ask for these specific items
-        SPICY_ITEMS = {
-            "chicken burger", "beef burger", "crispy burger",
-            "chicken burger meal", "beef burger meal", "crispy burger meal"
-        }
-        
-        should_ask_spice = (
-            chosen.lower().strip() in SPICY_ITEMS
-        )
-
-        if should_ask_spice:
-            s["last_item"] = chosen
-            s["last_qty"] = qty
-            s["stage"] = "await_spice"
-            session["state"] = s
-            reply = (f"بالنسبة لـ {qty} {chosen}، هل تفضلها حارة أم بدون حار؟" if lang == "ar" else f"For your {qty} {chosen.title()}, would you like them spicy or non-spicy?")
-            return make_chat_response(reply, lang)
-        
-        # If not spicy item, add directly
-        s["order"].append({"item": chosen, "qty": qty, "spicy": 0, "nonspicy": 0, "price": price, "subtotal": qty * price})
-        s["last_confirmed_item"] = {"item": chosen, "qty": qty, "spicy": 0, "nonspicy": 0, "price": price}
-        s["last_item"] = None
-        s["last_qty"] = 0
-
-        # ✅ PROCEED TO NEXT IN GENERIC QUEUE
-        prompt = _start_next_generic_from_queue(s, MENU, lang)
-        if prompt:
-            session["state"] = s
-            return make_chat_response(prompt, lang)
-
-        s["stage"] = "add_more"
-        summary, total = build_order_summary_and_total(s["order"], lang)
-        s["total"] = total
+        s["last_item"] = chosen
+        s["last_qty"] = qty
+        s["stage"] = "await_spice"
         session["state"] = s
-
-        reply = (
-            f"{chosen} ×{qty} تمت إضافته إلى طلبك.<br>هل ترغب في إضافة شيء آخر؟"
-            if lang == "ar"
-            else f"{chosen.title()} ×{qty} added to your order.<br>Would you like to add anything else?"
-        )
+        reply = (f"بالنسبة لـ {qty} {chosen}، هل تفضلها حارة أم بدون حار؟" if lang == "ar" else f"For your {qty} {chosen.title()}, would you like them spicy or non-spicy?")
         return make_chat_response(reply, lang)
 
     # pick sandwich button

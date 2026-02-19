@@ -10,7 +10,7 @@ from zoneinfo import ZoneInfo
 
 import pandas as pd
 from flask import Flask, render_template, request, jsonify, session
-from nlp_utils import detect_intent, detect_language, detect_category_from_text
+from nlp_utils import detect_intent, detect_language
 from openai import OpenAI
 from dotenv import load_dotenv
 
@@ -380,7 +380,15 @@ def handle_multi_item_text(msg_raw, s, MENU, lang):
         # ✅ AUTO-ADD specific items (Coffee, Pepsi, Sandwiches, etc.) - NO QUESTIONS
         # Sandwiches don't need spicy selection, auto-add them
         if cat not in ("burgers_meals",):
-            add_item_to_order_summary(s, resolved, qty, float(price), spicy=0, nonspicy=0)
+            s.setdefault("order", [])
+            s["order"].append({
+                "item": resolved,
+                "qty": qty,
+                "spicy": 0,
+                "nonspicy": 0,
+                "price": float(price),
+                "subtotal": qty * float(price)
+            })
             info = MENU.get(resolved, {})
             display_name = info.get("name_ar") if lang == "ar" else (info.get("name_en") or resolved).title()
             added_lines.append(f"{qty} {display_name}")
@@ -429,9 +437,17 @@ def handle_multi_item_text(msg_raw, s, MENU, lang):
                 
                 return make_chat_response(confirm_msg, lang)
             
+            s.setdefault("order", [])
             is_spicy = 1 if spicy == "spicy" else 0
             is_nonspicy = 1 if spicy in ("non-spicy", "nonspicy") else 0
-            add_item_to_order_summary(s, resolved, qty, float(price), spicy=is_spicy, nonspicy=is_nonspicy)
+            s["order"].append({
+                "item": resolved,
+                "qty": qty,
+                "spicy": is_spicy,
+                "nonspicy": is_nonspicy,
+                "price": float(price),
+                "subtotal": qty * float(price)
+            })
             info = MENU.get(resolved, {})
             display_name = info.get("name_ar") if lang == "ar" else (info.get("name_en") or resolved).title()
             spicy_label = " (Spicy)" if is_spicy else " (Non-Spicy)" if is_nonspicy else ""
@@ -463,6 +479,18 @@ def handle_multi_item_text(msg_raw, s, MENU, lang):
     if all_generics_ordered:
         s.setdefault("generic_queue", [])
         s["generic_queue"].extend(all_generics_ordered)
+        
+        # Start processing first generic from queue
+        prompt = _start_next_generic_from_queue(s, MENU, lang)
+        session["state"] = s
+
+        if prompt:
+            prefix = (
+                ("تمت إضافة: " + "، ".join(added_lines) + "<br><br>")
+                if added_lines and lang == "ar"
+                else ("Added: " + ", ".join(added_lines) + "<br><br>" if added_lines else "")
+            )
+            return make_chat_response(prefix + prompt, lang)
 
     # prefix (show what was added before asking next question)
     prefix = (
@@ -472,6 +500,7 @@ def handle_multi_item_text(msg_raw, s, MENU, lang):
     )
 
     # ✅ OLD BURGER/SANDWICH SPECIFIC HANDLING (now redundant, kept for safety)
+    # This section should never execute if all_generics_ordered worked
     bs_only_fallback = [
         g for g in (generics or [])
         if (g.get("kind") in ("burger", "sandwich")) and g not in all_generics_ordered
@@ -480,8 +509,33 @@ def handle_multi_item_text(msg_raw, s, MENU, lang):
     if bs_only_fallback:
         s.setdefault("generic_queue", [])
         s["generic_queue"].extend(bs_only_fallback)
+        nxt = s["generic_queue"].pop(0)
 
-    # ✅ If we have burgers needing spice → ask spice NOW (PRIORITY!)
+        s["last_qty"] = int(nxt.get("qty") or 1)
+        print(f"🔍 DEBUG [generic_queue pop]: Setting last_qty={s['last_qty']} for kind={nxt.get('kind')}")
+        s["last_item"] = None
+
+        if nxt.get("kind") == "burger":
+            s["stage"] = "await_specific_burger"
+            s["burger_page"] = 0
+            ask = (
+                f"لديك {s['last_qty']} برجر. اختر نوع البرجر."
+                if lang == "ar"
+                else f"You ordered {s['last_qty']} burger(s). Please choose which burger."
+            )
+        else:
+            s["stage"] = "await_specific_sandwich"
+            s["sand_page"] = 0
+            ask = (
+                f"لديك {s['last_qty']} ساندويتش. اختر نوع الساندويتش."
+                if lang == "ar"
+                else f"You ordered {s['last_qty']} sandwich(es). Please choose which sandwich."
+            )
+
+        session["state"] = s
+        return make_chat_response(prefix + ask, lang)
+
+    # ✅ If we have burgers needing spice → ask spice NOW
     if s.get("spice_queue"):
         nxt = s["spice_queue"].pop(0)
         s["last_item"] = nxt["item"]
@@ -654,77 +708,100 @@ def _format_category_page(MENU: dict, cat: str, lang: str, page: int = 0, page_s
 def _start_next_generic_from_queue(s: dict, MENU: dict, lang: str):
     """
     Pops next generic (burger/sandwich/meals/juices/drinks) and shows appropriate prompt.
+    Also handles spice_queue if generic_queue is empty.
     Excludes already-ordered items from the menu display.
     """
     q = s.get("generic_queue") or []
-    if not q:
-        return None
-
-    first = q.pop(0)
-    s["generic_queue"] = q  # save back
-
-    kind = (first.get("kind") or "").strip().lower()
-    qty  = int(first.get("qty") or 1)
-
-    # store qty for selected specific item
-    s["last_qty"] = qty
-    s["last_kind"] = kind
-    s["cat_page"] = 0
     
-    # ✅ Get already-ordered items to exclude from menu
-    ordered_items = [item.get("item") for item in s.get("order", []) if item.get("item")]
+    # ✅ 1. Process Generic Queue first
+    if q:
+        first = q.pop(0)
+        s["generic_queue"] = q  # save back
 
-    if kind == "burger":
-        s["stage"] = "await_specific_burger"
-        s["burger_page"] = 0
-        ask_next = (
-            f"لديك {qty} برجر. اختر نوع البرجر:"
+        kind = (first.get("kind") or "").strip().lower()
+        qty  = int(first.get("qty") or 1)
+
+        # store qty for selected specific item
+        s["last_qty"] = qty
+        s["last_kind"] = kind
+        s["cat_page"] = 0
+        
+        # ✅ Get already-ordered items to exclude from menu
+        ordered_items = [item.get("item") for item in s.get("order", []) if item.get("item")]
+
+        if kind == "burger":
+            s["stage"] = "await_specific_burger"
+            s["burger_page"] = 0
+            ask_next = (
+                f"لديك {qty} برجر. اختر نوع البرجر:"
+                if lang == "ar"
+                else f"You ordered {qty} burger(s). Please choose which burger:"
+            )
+            return ask_next
+
+        if kind == "sandwich":
+            s["stage"] = "await_specific_sandwich"
+            s["sand_page"] = 0
+            ask_next = (
+                f"لديك {qty} ساندويتش. اختر نوع الساندويتش:"
+                if lang == "ar"
+                else f"You ordered {qty} sandwich(es). Please choose which sandwich:"
+            )
+            return ask_next
+
+        if kind == "meals":
+            s["stage"] = "await_specific_meal_text"
+            title = "Select a meal:" if lang != "ar" else "اختاري وجبة:"
+            body, chunk, _ = _format_category_page(MENU, "meals", lang, page=0)
+            s["last_page_keys"] = chunk or []
+            return f"{title}\n{body}"
+
+        if kind == "juices":
+            s["stage"] = "await_specific_juice_text"
+            title = "Select a juice:" if lang != "ar" else "اختاري عصير:"
+            body, chunk, _ = _format_category_page(MENU, "juices", lang, page=0)
+            s["last_page_keys"] = chunk or []
+            return f"{title}\n{body}"
+
+        if kind == "drinks":
+            s["stage"] = "await_specific_drink_text"
+            title = "Select a drink:" if lang != "ar" else "اختاري مشروب:"
+            # ✅ Exclude already-ordered drinks (e.g., coffee)
+            body, chunk, _ = _format_category_page(MENU, "drinks", lang, page=0, exclude_items=ordered_items)
+            s["last_page_keys"] = chunk or []
+            return f"{title}\n{body}"
+
+        if kind == "snacks_sides":
+            s["stage"] = "await_specific_side_text"
+            title = "Select a side/snack:" if lang != "ar" else "اختاري مقبلات/جانبي:"
+            body, chunk, _ = _format_category_page(MENU, "snacks_sides", lang, page=0)
+            s["last_page_keys"] = chunk or []
+            return f"{title}\n{body}"
+
+        # If unknown kind, skip and try next
+        return _start_next_generic_from_queue(s, MENU, lang)
+
+    # ✅ 2. If Generic Queue is empty, check Spice Queue
+    sq = s.get("spice_queue") or []
+    if sq:
+        nxt = sq.pop(0)
+        s["spice_queue"] = sq
+        
+        s["last_item"] = nxt["item"]
+        s["last_qty"] = int(nxt.get("qty") or 1)
+        s["stage"] = "await_spice"
+        
+        info = MENU.get(nxt["item"], {})
+        display_name = info.get("name_ar") if lang == "ar" else (info.get("name_en") or nxt["item"]).title()
+        
+        ask_spice = (
+            f"بالنسبة لـ {s['last_qty']} {display_name}، هل تفضلها حارة أم بدون حار؟"
             if lang == "ar"
-            else f"You ordered {qty} burger(s). Please choose which burger:"
+            else f"For your {s['last_qty']} {display_name}, would you like them spicy or non-spicy?"
         )
-        return ask_next
-
-    if kind == "sandwich":
-        s["stage"] = "await_specific_sandwich"
-        s["sand_page"] = 0
-        ask_next = (
-            f"لديك {qty} ساندويتش. اختر نوع الساندويتش:"
-            if lang == "ar"
-            else f"You ordered {qty} sandwich(es). Please choose which sandwich:"
-        )
-        return ask_next
-
-    if kind == "meals":
-        s["stage"] = "await_specific_meal_text"
-        title = "Select a meal:" if lang != "ar" else "اختاري وجبة:"
-        body, chunk, _ = _format_category_page(MENU, "meals", lang, page=0)
-        s["last_page_keys"] = chunk or []
-        return f"{title}\n{body}"
-
-    if kind == "juices":
-        s["stage"] = "await_specific_juice_text"
-        title = "Select a juice:" if lang != "ar" else "اختاري عصير:"
-        body, chunk, _ = _format_category_page(MENU, "juices", lang, page=0)
-        s["last_page_keys"] = chunk or []
-        return f"{title}\n{body}"
-
-    if kind == "drinks":
-        s["stage"] = "await_specific_drink_text"
-        title = "Select a drink:" if lang != "ar" else "اختاري مشروب:"
-        # ✅ Exclude already-ordered drinks (e.g., coffee)
-        body, chunk, _ = _format_category_page(MENU, "drinks", lang, page=0, exclude_items=ordered_items)
-        s["last_page_keys"] = chunk or []
-        return f"{title}\n{body}"
-
-    if kind == "snacks_sides":
-        s["stage"] = "await_specific_side_text"
-        title = "Select a side/snack:" if lang != "ar" else "اختاري مقبلات/جانبي:"
-        body, chunk, _ = _format_category_page(MENU, "snacks_sides", lang, page=0)
-        s["last_page_keys"] = chunk or []
-        return f"{title}\n{body}"
-
-    # If unknown kind, skip and try next
-    return _start_next_generic_from_queue(s, MENU, lang)
+        return ask_spice
+    
+    return None
     
     
     
@@ -1052,9 +1129,6 @@ def _start_next_generic(s: dict, MENU: dict, lang: str):
 # ---------------------------
 # ENV VARIABLES
 # ---------------------------
-# Groq API (OpenAI-compatible, faster and cheaper)
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-# Fallback to OpenAI if Groq not available
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 FLASK_SECRET = os.getenv("FLASK_SECRET_KEY", "joana_fastfood_secret")
 
@@ -1095,37 +1169,19 @@ def _mask(val: str | None) -> str:
 app = Flask(__name__, static_folder="static", template_folder="templates")
 app.secret_key = FLASK_SECRET
 
-# Prioritize Groq API (faster, cheaper) over OpenAI
-if GROQ_API_KEY:
-    tail = GROQ_API_KEY[-4:] if len(GROQ_API_KEY) >= 4 else "****"
-    print(f"GROQ_API_KEY detected (length={len(GROQ_API_KEY)}, masked=***{tail})")
-    client = OpenAI(
-        api_key=GROQ_API_KEY,
-        base_url="https://api.groq.com/openai/v1"
-    )
-    LLM_MODEL = "llama-3.3-70b-versatile"  # Groq's fast model
-    LLM_PROVIDER = "groq"
-    print(f"✅ Using Groq API with model: {LLM_MODEL}")
-elif OPENAI_API_KEY:
+if not OPENAI_API_KEY:
+    print("Warning: OPENAI_API_KEY is not set; OpenAI requests will fail until it is configured.")
+    client = None
+else:
     tail = OPENAI_API_KEY[-4:] if len(OPENAI_API_KEY) >= 4 else "****"
     print(f"OPENAI_API_KEY detected (length={len(OPENAI_API_KEY)}, masked=***{tail})")
     client = OpenAI(api_key=OPENAI_API_KEY)
-    LLM_MODEL = "gpt-4o-mini"
-    LLM_PROVIDER = "openai"
-    print(f"✅ Using OpenAI API with model: {LLM_MODEL}")
-else:
-    print("Warning: No LLM API key set (GROQ_API_KEY or OPENAI_API_KEY). AI features will be disabled.")
-    client = None
-    LLM_MODEL = None
-    LLM_PROVIDER = None
 
 
 def log_env_summary():
     print(
         "ENV STATUS ->",
-        f"GROQ_API_KEY={_mask(GROQ_API_KEY)} |",
         f"OPENAI_API_KEY={_mask(OPENAI_API_KEY)} |",
-        f"LLM_PROVIDER={LLM_PROVIDER} |",
         f"SUPABASE_SERVICE_ROLE_KEY={_mask(SUPABASE_SERVICE_ROLE_KEY)} |",
         f"WHATSAPP_TOKEN={_mask(WHATSAPP_TOKEN)} |",
         f"DEEPGRAM_API_KEY={_mask(DEEPGRAM_API_KEY)}",
@@ -1744,89 +1800,19 @@ def html_to_whatsapp(text: str) -> str:
     return text.strip()
 
 # =========================================================
-# GREETINGS (ENHANCED - 100+ patterns)
+# GREETINGS
 # =========================================================
 WA_GREETINGS = [
-    # Basic greetings
-    "hi", "hello", "hey", "hii", "hiii", "hiiii", "helo", "hallo", "hullo",
-    "hiya", "heya", "yo", "sup", "wassup", "whats up", "what's up", "whaddup",
-    "howdy", "greetings", "salutations",
-    # Time-based greetings
-    "good morning", "good afternoon", "good evening", "good night", "good day",
-    "morning", "afternoon", "evening", "gm", "gn",
-    # How are you variations
-    "how are you", "how r u", "how r you", "how are u", "how you doing",
-    "how are you doing", "how is it going", "hows it going", "how's it going",
-    "how you been", "how have you been", "how are things", "hows things",
-    "how do you do", "whats going on", "what's going on", "what is going on",
-    "hows your day", "how's your day", "hows life", "how's life",
-    "you good", "you ok", "everything good", "all good", "you alright",
-    "are you there", "anybody there", "anyone there", "you there",
-    "hru", "wru", "wyd",
-    # Salam variations
-    "salam", "slam", "asalam", "assalam", "assalam o alaikum", "assalamu alaikum",
-    # Arabic greetings
-    "السلام عليكم", "مرحبا", "أهلاً", "اهلا", "هلا", "هاي", "هاى", "السلام",
-    "اهلين", "هلا والله", "يا هلا", "مرحبتين", "الله بالخير",
-    "صباح الخير", "صباحك سكر", "مساء الخير", "مساء النور",
-    # Arabic how are you
-    "كيف حالك", "كيفك", "شلونك", "شخبارك", "عامل ايه", "كيف الحال",
-    "وش اخبارك", "ايش اخبارك", "شو اخبارك", "كيف صحتك", "عساك بخير",
+    "hi", "hello", "hey", "salam", "slam", "asalam", "assalam",
+    "assalam o alaikum", "assalamu alaikum", "السلام عليكم", "مرحبا",
 ]
 
 def is_wa_greeting(text: str) -> bool:
-    """Check if text is a greeting (hi, hello, how are you, etc.)"""
     if not text:
         return False
     t = text.strip().lower()
-    t = re.sub(r"[^\w\u0600-\u06FF ]+", "", t).strip()
-    
-    # Exact match
-    if t in WA_GREETINGS:
-        return True
-    
-    # Check if starts with greeting
-    for greeting in WA_GREETINGS:
-        greeting_clean = re.sub(r"[^\w\u0600-\u06FF ]+", "", greeting).strip()
-        if t == greeting_clean or t.startswith(greeting_clean + " "):
-            return True
-    
-    return False
-
-
-# =========================================================
-# ORDER INTENT PATTERNS (for webhook detection)
-# =========================================================
-ORDER_INTENT_KEYWORDS = [
-    # "I want to order" variations
-    "i want to order", "i wanna order", "want to order", "wanna order",
-    "i want order", "i would like to order", "id like to order",
-    "i need to order", "need to order", "wish to order",
-    # "Can I order" variations  
-    "can i order", "can i order something", "could i order", "may i order",
-    "can i place an order", "can i make an order", "can i get an order",
-    # "Order" simple variations
-    "order", "order now", "order please", "order pls", "order plz",
-    "place order", "place an order", "make order", "start order",
-    "ready to order", "lets order", "let's order", "ordering",
-    # "I'm hungry" / "I need food" variations
-    "im hungry", "i am hungry", "hungry", "starving", "i need food",
-    "need food", "i want food", "want food", "something to eat",
-    # Arabic order intents
-    "أريد الطلب", "ابغى اطلب", "أبغى أطلب", "بدي اطلب", "اريد اطلب",
-    "ابغا اطلب", "ودي اطلب", "حابب اطلب", "عايز اطلب",
-    "طلب", "اطلب", "نطلب", "طلب جديد", "ممكن اطلب",
-]
-
-def is_order_intent(text: str) -> bool:
-    """Check if text indicates user wants to order"""
-    if not text:
-        return False
-    t = text.strip().lower()
-    for pattern in ORDER_INTENT_KEYWORDS:
-        if pattern in t:
-            return True
-    return False
+    t = re.sub(r"[^\w\u0600-\u06FF ]+", "", t)
+    return t in WA_GREETINGS
 
 # =========================================================
 # BASIC UTILITIES
@@ -2114,7 +2100,7 @@ def build_single_item_line(item, lang):
 
 
 def add_item_to_order_summary(state: dict, item_key: str, qty: int, price: float, spicy: int = 0, nonspicy: int = 0):
-    """Append a menu item to the in-memory order and keep totals updated. Merges identical items."""
+    """Append a menu item to the in-memory order and keep totals updated."""
     state.setdefault("order", [])
 
     try:
@@ -2127,30 +2113,15 @@ def add_item_to_order_summary(state: dict, item_key: str, qty: int, price: float
     except Exception:
         price_f = 0.0
 
-    # ✅ MERGE LOGIC: Check if identical item exists
-    item_key_clean = (item_key or "").strip().lower()
-    merged = False
-    
-    for existing in state["order"]:
-        if (existing.get("item") == item_key_clean and 
-            existing.get("spicy") == (1 if spicy else 0) and 
-            existing.get("nonspicy") == (1 if nonspicy else 0)):
-            
-            existing["qty"] += qty_int
-            existing["subtotal"] = existing["qty"] * price_f
-            merged = True
-            break
-            
-    if not merged:
-        line = {
-            "item": item_key_clean,
-            "qty": qty_int,
-            "spicy": 1 if spicy else 0,
-            "nonspicy": 1 if nonspicy else 0,
-            "price": price_f,
-            "subtotal": qty_int * price_f,
-        }
-        state["order"].append(line)
+    line = {
+        "item": (item_key or "").strip().lower(),
+        "qty": qty_int,
+        "spicy": 1 if spicy else 0,
+        "nonspicy": 1 if nonspicy else 0,
+        "price": price_f,
+        "subtotal": qty_int * price_f,
+    }
+    state["order"].append(line)
 
     # Keep running total handy
     _, total = build_order_summary_and_total(state.get("order") or [], state.get("lang", "en"))
@@ -2287,13 +2258,19 @@ def add_extracted_items_to_state(s: dict, extracted: list, lang: str):
         # burgers/meals need spice
         if category == "burgers_meals":
             if spicy_pref in ("spicy", "hot"):
-                add_item_to_order_summary(s, name, qty, price, spicy=1, nonspicy=0)
+                s["order"].append({
+                    "item": name, "qty": qty, "spicy": 1, "nonspicy": 0,
+                    "price": price, "subtotal": qty * price
+                })
                 added_lines.append(build_single_item_line({
                     "item": name, "qty": qty, "spicy": 1, "nonspicy": 0
                 }, lang))
 
             elif spicy_pref in ("non-spicy", "nonspicy", "mild", "not spicy", "no spicy"):
-                add_item_to_order_summary(s, name, qty, price, spicy=0, nonspicy=1)
+                s["order"].append({
+                    "item": name, "qty": qty, "spicy": 0, "nonspicy": 1,
+                    "price": price, "subtotal": qty * price
+                })
                 added_lines.append(build_single_item_line({
                     "item": name, "qty": qty, "spicy": 0, "nonspicy": 1
                 }, lang))
@@ -2305,7 +2282,10 @@ def add_extracted_items_to_state(s: dict, extracted: list, lang: str):
             continue
 
         # non-burger: direct add
-        add_item_to_order_summary(s, name, qty, price, spicy=0, nonspicy=0)
+        s["order"].append({
+            "item": name, "qty": qty, "spicy": 0, "nonspicy": 0,
+            "price": price, "subtotal": qty * price
+        })
         added_lines.append(build_single_item_line({
             "item": name, "qty": qty, "spicy": 0, "nonspicy": 0
         }, lang))
@@ -2324,7 +2304,7 @@ def detect_spicy_nonspicy(msg: str):
     text = msg.lower().replace("_", " ").replace("-", " ")
     nonspicy_keywords_en = [
         "non spicy", "non-spicy", "no spicy", "without spicy", "without spice",
-        "not spicy", "mild", "regular", "normal", "classic", "original"
+        "not spicy", "mild",
     ]
     nonspicy_keywords_ar = ["بدون حار", "بدون حر", "عادي", "بدون"]
     nonspicy_flag = any(k in text for k in nonspicy_keywords_en + nonspicy_keywords_ar)
@@ -2575,7 +2555,7 @@ def check_if_irrelevant_question(msg: str, lang: str = "en") -> dict:
     
     try:
         res = client.chat.completions.create(
-            model=LLM_MODEL,
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": msg}
@@ -2852,7 +2832,14 @@ def add_non_generic_items_to_order(state: dict, msg: str, lang: str):
             print("⚠ Skipped item (price missing):", en)
             continue
 
-        add_item_to_order_summary(state, resolved, qty, float(price), spicy=0, nonspicy=0)
+        state["order"].append({
+            "item": resolved,
+            "qty": qty,
+            "spicy": 0,
+            "nonspicy": 0,
+            "price": float(price),
+            "subtotal": qty * float(price)
+        })
 
         # ✅ build user-facing added lines from resolved menu info
         info = MENU.get(resolved, {}) or {}
@@ -3235,24 +3222,8 @@ def apply_cancel_on_order(state: dict, cancel_req: dict, lang: str, return_parts
         return False, msg
 
     matches = []
-    matches = []
-    # Resolve the cancel request item key 
-    cancel_item_key, _ = resolve_menu_item(item)
-    
     for idx, line in enumerate(order):
-        line_item_name = line.get("item") or ""
-        # Resolve the order line item key
-        line_item_key, _ = resolve_menu_item(line_item_name)
-        
-        # Compare resolved keys (handles "Zinger" vs "Zinger Meal" vs "Chicken Burger" if mapped)
-        # Fallback to direct string compare if resolution fails
-        match_found = False
-        if cancel_item_key and line_item_key and cancel_item_key == line_item_key:
-            match_found = True
-        elif line_item_name.lower() == item.lower():
-            match_found = True
-            
-        if not match_found:
+        if (line.get("item") or "").lower() != item.lower():
             continue
         matches.append((idx, line))
 
@@ -3408,7 +3379,7 @@ def apply_cancel_on_order(state: dict, cancel_req: dict, lang: str, return_parts
 def send_category_buttons(user_number: str, lang: str = "en", show_image: bool = True):
     caption = "Here is our menu" if lang == "en" else "هذه قائمتنا"
     if show_image:
-        image_url = "https://joanachatbot-production.up.railway.app/static/menu.PNG"
+        image_url = "https://qintellecttechnologies.com/joana_chatbot/static/menu.PNG"
         send_whatsapp_image(user_number, image_url, caption=caption)
 
     if lang == "ar":
@@ -3596,7 +3567,7 @@ def get_llm_reply(msg, lang="en"):
 
     try:
         res = client.chat.completions.create(
-            model=LLM_MODEL,
+            model="gpt-4o-mini",
             messages=messages,
             temperature=0.5,
             max_tokens=250,
@@ -3685,13 +3656,14 @@ def correct_arabic_typos_with_ai(msg: str) -> str:
     
     try:
         res = client.chat.completions.create(
-            model=LLM_MODEL,  # Fast model for typo correction
+            model="gpt-4o-mini",  # Fast and cheap for typo correction
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": msg}
             ],
             temperature=0.2,  # Low temp for consistent corrections
             max_tokens=200,
+            timeout=3,  # Fast timeout to avoid delays
         )
         
         corrected = (res.choices[0].message.content or "").strip()
@@ -4011,7 +3983,7 @@ def parse_intelligent_order(msg: str, lang: str = "en") -> dict:
         )
         
         res = client.chat.completions.create(
-            model=LLM_MODEL,  # Using configured LLM provider
+            model="gpt-4o",  # ✅ UPGRADED from gpt-4o-mini for better accuracy
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": msg}
@@ -4214,17 +4186,12 @@ def transcribe_audio_from_cloud(media_id: str, priority_lang=None) -> str:
             temp_audio_path = f.name
         print(f"💾 Saved audio to: {temp_audio_path} (format: {file_ext})")
 
-        # Step 4: Transcribe using OpenAI or Groq Whisper API
-        # Determine model based on provider
-        audio_model = "whisper-1"
-        if LLM_PROVIDER == "groq":
-            audio_model = "whisper-large-v3"
-            
-        print(f"🤖 Sending to {str(LLM_PROVIDER).upper()} Whisper API (model={audio_model})...")
+        # Step 4: Transcribe using OpenAI Whisper API
+        print(f"🤖 Sending to OpenAI Whisper API...")
         try:
             with open(temp_audio_path, "rb") as audio_file:
                 transcript = client.audio.transcriptions.create(
-                    model=audio_model,
+                    model="whisper-1",
                     file=audio_file,
                     response_format="text",
                     language=None, # Auto-detect but guided by prompt
@@ -4949,12 +4916,7 @@ def whatsapp_webhook():
     if not from_button and is_first_interaction and user_text and len(user_text.strip()) > 2:
         # Quick check: has numbers or food-related words
         has_numbers = any(char.isdigit() for char in user_text)
-        # Enhanced greeting detection - includes "how are you" variations
-        common_greetings = [
-            "hi", "hello", "hey", "hii", "hiii", "salam", "مرحبا", "السلام", "اهلا", "هلا",
-            "how are you", "how r u", "how are u", "how you doing", "hows it going",
-            "كيف حالك", "كيفك", "شلونك", "شخبارك"
-        ]
+        common_greetings = ["hi", "hello", "hey", "salam", "مرحبا", "السلام"]
         is_likely_greeting = any(g in user_text.lower() for g in common_greetings)
         
         # Only use AI if it has numbers OR not a clear greeting
@@ -4972,7 +4934,7 @@ def whatsapp_webhook():
                 )
                 
                 classify_res = client.chat.completions.create(
-                    model=LLM_MODEL,
+                    model="gpt-4o-mini",
                     messages=[{"role": "user", "content": classify_prompt}],
                     temperature=0,
                     max_tokens=10
@@ -5075,34 +5037,6 @@ def whatsapp_webhook():
         
         send_whatsapp_text(user_number, rejection_msg)
         # Show category buttons to redirect
-        send_category_buttons(user_number, lang, show_image=True)
-        return "ok", 200
-    
-    # ✅ ORDER INTENT HANDLER - "I want to order", "can I order something", etc.
-    # This handles cases that were previously going to "Sorry, something went wrong"
-    if not from_button and is_order_intent(user_text) and not looks_like_order_or_menu(user_text):
-        print(f"✅ ORDER INTENT DETECTED: '{user_text}'")
-        
-        # Initialize session if needed
-        WHATSAPP_SESSIONS[user_number] = {
-            "state": {"stage": None, "order": [], "total": 0, "last_item": None, "last_qty": 0, 
-                     "last_confirmed_item": None, "pending_item": None, "spice_queue": [], "generic_queue": []},
-            "messages": [],
-            "lang": lang,
-        }
-        
-        # Show welcome message with menu categories
-        display_name = (wa_name or "").strip() or ("عميل" if lang == "ar" else "Customer")
-        welcome_msg = (
-            f"أهلاً *{display_name}*! 🎉\n\n"
-            "بالتأكيد، يمكنك الطلب الآن!\n"
-            "📋 اختر من القائمة:"
-            if lang == "ar" else
-            f"Hi *{display_name}*! 🎉\n\n"
-            "Of course, you can order now!\n"
-            "📋 Choose from our menu:"
-        )
-        send_whatsapp_text(user_number, welcome_msg)
         send_category_buttons(user_number, lang, show_image=True)
         return "ok", 200
     
@@ -5256,24 +5190,6 @@ def whatsapp_webhook():
             customer_id=customer_id,
         )
 
-        # ✅ Handle open_category action (from order_start intent)
-        if result.get("action") == "open_category":
-            cat = result.get("category")
-            # Map to internal keys
-            mapping = {
-                "burgers": "burgers_meals",
-                "meals": "burgers_meals", 
-                "sandwiches": "sandwiches",
-                "sides": "snacks_sides",
-                "drinks": "drinks",
-                "juices": "juices"
-            }
-            internal_cat = mapping.get(cat, cat)
-            
-            WA_CATEGORY_STATE[user_number] = {"category": internal_cat, "index": 0}
-            send_items_for_category(user_number, internal_cat, lang)
-            return "ok", 200
-
         reply_html = result.get("reply") or ("Sorry, something went wrong." if lang == "en" else "عذراً، حدث خطأ ما.")
         reply_text = html_to_whatsapp(reply_html)
         
@@ -5289,7 +5205,7 @@ def whatsapp_webhook():
             return "ok", 200
 
         if result.get("menu"):
-            image_url = "https://joanachatbot-production.up.railway.app/static/menu.PNG"
+            image_url = "https://qintellecttechnologies.com/joana_chatbot/static/menu.PNG"
             send_whatsapp_image(user_number, image_url, caption=("Here is our menu" if lang == "en" else "هذه قائمتنا"))
 
         if stage == "await_specific_burger":
@@ -6374,75 +6290,9 @@ def chat():
             lang
         )
 
-    if intent == "menu" and not (from_button and msg_l.startswith("item_")):
-        # 1. Check for specific category request (e.g. "Do you have drinks?")
-        detected_cat = detect_category_from_text(msg)
-        if detected_cat:
-            return jsonify({
-                "reply": "", 
-                "action": "open_category",
-                "category": detected_cat,
-                "lang": lang
-            })
-
+    if intent == "menu":
         reply = "Here’s our menu! Please place your order." if lang == "en" else "هذه قائمتنا! من فضلك ضع طلبك."
         return make_chat_response(reply, lang, menu="/static/menu.PNG")
-
-    # ✅ GREETING INTENT - Handle "hi", "how are you", etc.
-    if intent == "greeting":
-        greeting_reply = (
-            "أهلاً وسهلاً! 👋 أنا مساعدك الذكي في مطعم JOANA!\n\n"
-            "كيف يمكنني مساعدتك اليوم؟ 🍔\n"
-            "• اكتب 'menu' لعرض القائمة\n"
-            "• أو أخبرني ماذا تريد أن تطلب!"
-            if lang == "ar" else
-            "Hello! 👋 I'm your JOANA Fast Food assistant!\n\n"
-            "How can I help you today? 🍔\n"
-            "• Type 'menu' to see our menu\n"
-            "• Or tell me what you'd like to order!"
-        )
-        return make_chat_response(greeting_reply, lang)
-
-    # ✅ DELIVERY INTENT
-    if intent == "delivery":
-        reply = (
-            "نعم، لدينا خدمة توصيل! 🚗💨\nيمكنك الطلب الآن وسنقوم بتوصيله إليك.\n\nماذا تود أن تطلب؟"
-            if lang == "ar" else
-            "Yes, we have delivery service! 🚗💨\nYou can place your order now and we'll deliver it to you.\n\nWhat would you like to order?"
-        )
-        return make_chat_response(reply, lang)
-
-    # ✅ ORDER_START / BROWSE_CATEGORY INTENT
-    # PRIORITIES:
-    # 1. Items mentioned? -> Fall through to multi-item handler (e.g. "I want 2 burgers")
-    # 2. Category mentioned? -> Open Category (e.g. "I want burgers")
-    # 3. Neither? -> Show Generic Menu (e.g. "I want to order")
-    if intent in ("order_start", "browse_category"):
-        # 1. Check if it looks like a multi-item order
-        # If true, PASS so it falls through to the multi-item handler below
-        if looks_like_multi_item_text(msg_raw):
-            pass
-        else:
-            # 2. Check if a specific category was mentioned
-            detected_cat = detect_category_from_text(msg)
-            if detected_cat:
-                return jsonify({
-                    "reply": "", 
-                    "action": "open_category",
-                    "category": detected_cat,
-                    "lang": lang
-                })
-
-            # 3. Show Generic Menu
-            order_start_reply = (
-                "بالتأكيد! يمكنك الطلب الآن! 🎉\n\n"
-                "📋 هذه قائمتنا! اختر ما تريد:"
-                if lang == "ar" else
-                "Of course! You can order now! 🎉\n\n"
-                "📋 Here's our menu! Choose what you'd like:"
-            )
-            return make_chat_response(order_start_reply, lang, menu="/static/menu.PNG")
-
 
 
     # =========================================================
@@ -6671,7 +6521,7 @@ def chat():
         # User confirmed - add the large order
         if any(confirm in msg_clean for confirm in ["yes", "y", "نعم", "تأكيد", "موافق", "ok"]):
             s.setdefault("order", [])
-            add_item_to_order_summary(s, pending["item"], pending["qty"], pending["price"], spicy=pending.get("spicy"), nonspicy=pending.get("nonspicy"))
+            s["order"].append(pending)
             
             info = MENU.get(pending["item"], {})
             display_name = info.get("name_ar") if lang == "ar" else (info.get("name_en") or pending["item"]).title()
@@ -6766,7 +6616,14 @@ def chat():
                         # Normal quantity - add directly with proper spicy info
                         is_spicy = 1 if spicy_info == "spicy" else 0
                         is_nonspicy = 1 if spicy_info in ("non-spicy", "nonspicy") else 0
-                        add_item_to_order_summary(s, resolved, qty, float(price), spicy=is_spicy, nonspicy=is_nonspicy)
+                        s["order"].append({
+                            "item": resolved,
+                            "qty": qty,
+                            "spicy": is_spicy,
+                            "nonspicy": is_nonspicy,
+                            "price": float(price),
+                            "subtotal": qty * float(price)
+                        })
                 
                 # ✅ After all specific items processed, handle spice queue or generics
                 # Check if there are burgers waiting for spice selection
@@ -6946,19 +6803,7 @@ def chat():
         s["pending_item"] = None
 
         # ✅ CRITICAL FIX: Actually ADD the item to the order!
-        
-        # 🌶️ SPICY CHECK: Only ask for these specific items
-        SPICY_ITEMS = {
-            "chicken burger", "beef burger", "crispy burger",
-            "chicken burger meal", "beef burger meal", "crispy burger meal"
-        }
-        
-        should_ask_spice = (
-            category == "burgers_meals" and 
-            pending.lower().strip() in SPICY_ITEMS
-        )
-
-        if should_ask_spice:
+        if category == "burgers_meals":
             # For burgers, queue for spice question - will be added after spice selection
             s["stage"] = "await_spice"
             session["state"] = s
@@ -7006,46 +6851,11 @@ def chat():
         if category != "burgers_meals":
             reply = "من فضلك اختر برجر صحيح من القائمة." if lang == "ar" else "Please choose a valid burger from the menu."
             return make_chat_response(reply, lang)
-        # 🌶️ SPICY CHECK: Only ask for these specific items
-        SPICY_ITEMS = {
-            "chicken burger", "beef burger", "crispy burger",
-            "chicken burger meal", "beef burger meal", "crispy burger meal"
-        }
-        
-        should_ask_spice = (
-            chosen.lower().strip() in SPICY_ITEMS
-        )
-
-        if should_ask_spice:
-            s["last_item"] = chosen
-            s["last_qty"] = qty
-            s["stage"] = "await_spice"
-            session["state"] = s
-            reply = (f"بالنسبة لـ {qty} {chosen}، هل تفضلها حارة أم بدون حار؟" if lang == "ar" else f"For your {qty} {chosen.title()}, would you like them spicy or non-spicy?")
-            return make_chat_response(reply, lang)
-        
-        # If not spicy item, add directly
-        s["order"].append({"item": chosen, "qty": qty, "spicy": 0, "nonspicy": 0, "price": price, "subtotal": qty * price})
-        s["last_confirmed_item"] = {"item": chosen, "qty": qty, "spicy": 0, "nonspicy": 0, "price": price}
-        s["last_item"] = None
-        s["last_qty"] = 0
-
-        # ✅ PROCEED TO NEXT IN GENERIC QUEUE
-        prompt = _start_next_generic_from_queue(s, MENU, lang)
-        if prompt:
-            session["state"] = s
-            return make_chat_response(prompt, lang)
-
-        s["stage"] = "add_more"
-        summary, total = build_order_summary_and_total(s["order"], lang)
-        s["total"] = total
+        s["last_item"] = chosen
+        s["last_qty"] = qty
+        s["stage"] = "await_spice"
         session["state"] = s
-
-        reply = (
-            f"{chosen} ×{qty} تمت إضافته إلى طلبك.<br>هل ترغب في إضافة شيء آخر؟"
-            if lang == "ar"
-            else f"{chosen.title()} ×{qty} added to your order.<br>Would you like to add anything else?"
-        )
+        reply = (f"بالنسبة لـ {qty} {chosen}، هل تفضلها حارة أم بدون حار؟" if lang == "ar" else f"For your {qty} {chosen.title()}, would you like them spicy or non-spicy?")
         return make_chat_response(reply, lang)
 
     # pick sandwich button
@@ -7112,7 +6922,7 @@ def chat():
         if is_non_menu_item_request(msg):
             # Complete current burger with default non-spicy
             price, _ = get_price_and_category(last_item)
-            add_item_to_order_summary(s, last_item, last_qty, price, spicy=0, nonspicy=1)
+            s["order"].append({"item": last_item, "qty": last_qty, "spicy": 0, "nonspicy": 1, "price": price, "subtotal": last_qty * price})
             s["last_confirmed_item"] = {"item": last_item, "qty": last_qty, "spicy": 0, "nonspicy": 1, "price": price}
             s["last_item"] = None
             s["last_qty"] = 0
@@ -7155,7 +6965,7 @@ def chat():
         if is_new_order:
             # First, complete the current spice question with default (non-spicy)
             price, _ = get_price_and_category(last_item)
-            add_item_to_order_summary(s, last_item, last_qty, price, spicy=0, nonspicy=1)
+            s["order"].append({"item": last_item, "qty": last_qty, "spicy": 0, "nonspicy": 1, "price": price, "subtotal": last_qty * price})
             s["last_confirmed_item"] = {"item": last_item, "qty": last_qty, "spicy": 0, "nonspicy": 1, "price": price}
             s["last_item"] = None
             s["last_qty"] = 0
@@ -7179,9 +6989,9 @@ def chat():
                     spicy_q, non_q = 0, last_qty
 
             if spicy_q > 0:
-                add_item_to_order_summary(s, last_item, spicy_q, price, spicy=1, nonspicy=0)
+                s["order"].append({"item": last_item, "qty": spicy_q, "spicy": 1, "nonspicy": 0, "price": price, "subtotal": spicy_q * price})
             if non_q > 0:
-                add_item_to_order_summary(s, last_item, non_q, price, spicy=0, nonspicy=1)
+                s["order"].append({"item": last_item, "qty": non_q, "spicy": 0, "nonspicy": 1, "price": price, "subtotal": non_q * price})
 
             s["last_confirmed_item"] = {"item": last_item, "qty": last_qty, "spicy": 1 if spicy_q > 0 else 0, "nonspicy": 1 if non_q > 0 else 0, "price": price}
 

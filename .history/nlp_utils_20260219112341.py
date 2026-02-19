@@ -158,16 +158,11 @@ FINISH_ORDER_PATTERNS = [
     "i'm done", "thats all", "that's all", "thats it", "that's it",
     "nothing else", "nothing more", "no more", "all done",
     "finalize", "finalise", "finalize order", "end order", "end my order",
-    "place my order", "confirm order", "confirm my order", "submit order",
+    "place my order", "confirm order", "confirm my order", "submit order",4
     "proceed", "proceed to payment", "proceed to checkout",
     "ready to pay", "want to pay", "wanna pay", "i want to pay",
     "total", "my total", "how much", "how much total", "order total",
     "check total", "see total", "get total", "calculate total",
-]
-
-DELIVERY_PATTERNS = [
-    "delivery", "do you deliver", "is there delivery", "have delivery",
-    "shipping", "ship", "deliver", "home delivery",
 ]
 
 # ============================================
@@ -229,11 +224,6 @@ FINISH_ORDER_PATTERNS_AR = [
     "دفع", "سداد", "خلاص", "خلصنا", "تم الطلب", "كذا تمام",
     "بس كذا", "هذا كل شي", "هذا الطلب", "اكدي الطلب", "تاكيد الطلب",
     "المجموع", "كم المجموع", "كم الحساب", "كم الفاتورة",
-]
-
-DELIVERY_PATTERNS_AR = [
-    "توصيل", "عندكم توصيل", "فيه توصيل", "توصلون", "خدمة التوصيل",
-    "توصيل طلبات", "يوصل", "توصل",
 ]
 
 # ============================================
@@ -833,11 +823,6 @@ def detect_intent(text: str) -> str:
     for pattern in FINISH_ORDER_PATTERNS + FINISH_ORDER_PATTERNS_AR:
         if pattern.lower() in text_lower:
             return "finish"
-
-    # 3.5) Check for delivery patterns
-    for pattern in DELIVERY_PATTERNS + DELIVERY_PATTERNS_AR:
-        if pattern.lower() in text_lower:
-            return "delivery"
     
     # 4) Check for order intent patterns
     for pattern in ORDER_INTENT_PATTERNS + ORDER_INTENT_PATTERNS_AR:
