@@ -1052,6 +1052,9 @@ def _start_next_generic(s: dict, MENU: dict, lang: str):
 # ---------------------------
 # ENV VARIABLES
 # ---------------------------
+# Groq API (OpenAI-compatible, faster and cheaper)
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+# Fallback to OpenAI if Groq not available
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 FLASK_SECRET = os.getenv("FLASK_SECRET_KEY", "joana_fastfood_secret")
 
@@ -1092,19 +1095,37 @@ def _mask(val: str | None) -> str:
 app = Flask(__name__, static_folder="static", template_folder="templates")
 app.secret_key = FLASK_SECRET
 
-if not OPENAI_API_KEY:
-    print("Warning: OPENAI_API_KEY is not set; OpenAI requests will fail until it is configured.")
-    client = None
-else:
+# Prioritize Groq API (faster, cheaper) over OpenAI
+if GROQ_API_KEY:
+    tail = GROQ_API_KEY[-4:] if len(GROQ_API_KEY) >= 4 else "****"
+    print(f"GROQ_API_KEY detected (length={len(GROQ_API_KEY)}, masked=***{tail})")
+    client = OpenAI(
+        api_key=GROQ_API_KEY,
+        base_url="https://api.groq.com/openai/v1"
+    )
+    LLM_MODEL = "llama-3.3-70b-versatile"  # Groq's fast model
+    LLM_PROVIDER = "groq"
+    print(f"✅ Using Groq API with model: {LLM_MODEL}")
+elif OPENAI_API_KEY:
     tail = OPENAI_API_KEY[-4:] if len(OPENAI_API_KEY) >= 4 else "****"
     print(f"OPENAI_API_KEY detected (length={len(OPENAI_API_KEY)}, masked=***{tail})")
     client = OpenAI(api_key=OPENAI_API_KEY)
+    LLM_MODEL = "gpt-4o-mini"
+    LLM_PROVIDER = "openai"
+    print(f"✅ Using OpenAI API with model: {LLM_MODEL}")
+else:
+    print("Warning: No LLM API key set (GROQ_API_KEY or OPENAI_API_KEY). AI features will be disabled.")
+    client = None
+    LLM_MODEL = None
+    LLM_PROVIDER = None
 
 
 def log_env_summary():
     print(
         "ENV STATUS ->",
+        f"GROQ_API_KEY={_mask(GROQ_API_KEY)} |",
         f"OPENAI_API_KEY={_mask(OPENAI_API_KEY)} |",
+        f"LLM_PROVIDER={LLM_PROVIDER} |",
         f"SUPABASE_SERVICE_ROLE_KEY={_mask(SUPABASE_SERVICE_ROLE_KEY)} |",
         f"WHATSAPP_TOKEN={_mask(WHATSAPP_TOKEN)} |",
         f"DEEPGRAM_API_KEY={_mask(DEEPGRAM_API_KEY)}",
@@ -2554,7 +2575,7 @@ def check_if_irrelevant_question(msg: str, lang: str = "en") -> dict:
     
     try:
         res = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=LLM_MODEL,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": msg}
@@ -3559,7 +3580,7 @@ def get_llm_reply(msg, lang="en"):
 
     try:
         res = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=LLM_MODEL,
             messages=messages,
             temperature=0.5,
             max_tokens=250,
@@ -3648,14 +3669,13 @@ def correct_arabic_typos_with_ai(msg: str) -> str:
     
     try:
         res = client.chat.completions.create(
-            model="gpt-4o-mini",  # Fast and cheap for typo correction
+            model=LLM_MODEL,  # Fast model for typo correction
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": msg}
             ],
             temperature=0.2,  # Low temp for consistent corrections
             max_tokens=200,
-            timeout=3,  # Fast timeout to avoid delays
         )
         
         corrected = (res.choices[0].message.content or "").strip()
@@ -3975,7 +3995,7 @@ def parse_intelligent_order(msg: str, lang: str = "en") -> dict:
         )
         
         res = client.chat.completions.create(
-            model="gpt-4o",  # ✅ UPGRADED from gpt-4o-mini for better accuracy
+            model=LLM_MODEL,  # Using configured LLM provider
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": msg}
@@ -4931,7 +4951,7 @@ def whatsapp_webhook():
                 )
                 
                 classify_res = client.chat.completions.create(
-                    model="gpt-4o-mini",
+                    model=LLM_MODEL,
                     messages=[{"role": "user", "content": classify_prompt}],
                     temperature=0,
                     max_tokens=10
