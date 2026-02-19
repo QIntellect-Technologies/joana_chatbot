@@ -4198,12 +4198,17 @@ def transcribe_audio_from_cloud(media_id: str, priority_lang=None) -> str:
             temp_audio_path = f.name
         print(f"💾 Saved audio to: {temp_audio_path} (format: {file_ext})")
 
-        # Step 4: Transcribe using OpenAI Whisper API
-        print(f"🤖 Sending to OpenAI Whisper API...")
+        # Step 4: Transcribe using OpenAI or Groq Whisper API
+        # Determine model based on provider
+        audio_model = "whisper-1"
+        if LLM_PROVIDER == "groq":
+            audio_model = "whisper-large-v3"
+            
+        print(f"🤖 Sending to {str(LLM_PROVIDER).upper()} Whisper API (model={audio_model})...")
         try:
             with open(temp_audio_path, "rb") as audio_file:
                 transcript = client.audio.transcriptions.create(
-                    model="whisper-1",
+                    model=audio_model,
                     file=audio_file,
                     response_format="text",
                     language=None, # Auto-detect but guided by prompt
