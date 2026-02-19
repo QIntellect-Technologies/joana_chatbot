@@ -2763,13 +2763,22 @@ def resolve_menu_item(raw: str):
 
 
 def get_items_by_category(category: str):
+    # Mapping from Group ID (used in buttons/UI) -> raw categories in Excel/MENU
+    GROUPS = {
+        "burgers_meals": ["burgers", "meals"],
+        "sandwiches": ["sandwiches"],
+        "snacks_sides": ["sides"],
+        "drinks": ["drinks"],
+        "juices": ["juices"]
+    }
+    target_categories = GROUPS.get(category, [category])
+    
     items_map = {}
     for key, info in MENU.items():
-        if info.get("category") != category:
-            continue
-        en = (info.get("name_en") or key).strip().lower()
-        ar = (info.get("name_ar") or en).strip()
-        items_map[en] = {"en": en, "ar": ar}
+        if info.get("category") in target_categories:
+            en = (info.get("name_en") or key).strip().lower()
+            ar = (info.get("name_ar") or en).strip()
+            items_map[en] = {"en": en, "ar": ar}
     return list(items_map.values())
 
 # =========================================================
@@ -5258,17 +5267,7 @@ def whatsapp_webhook():
 
         # ✅ Handle open_category action (from order_start intent)
         if result.get("action") == "open_category":
-            cat = result.get("category")
-            # Map to internal keys
-            mapping = {
-                "burgers": "burgers_meals",
-                "meals": "burgers_meals", 
-                "sandwiches": "sandwiches",
-                "sides": "snacks_sides",
-                "drinks": "drinks",
-                "juices": "juices"
-            }
-            internal_cat = mapping.get(cat, cat)
+            internal_cat = result.get("category")
             
             WA_CATEGORY_STATE[user_number] = {"category": internal_cat, "index": 0}
             send_items_for_category(user_number, internal_cat, lang)
@@ -6378,10 +6377,20 @@ def chat():
         # 1. Check for specific category request (e.g. "Do you have drinks?")
         detected_cat = detect_category_from_text(msg)
         if detected_cat:
+            # Map to Group ID
+            GROUP_MAP = {
+                "burgers": "burgers_meals",
+                "meals": "burgers_meals",
+                "sandwiches": "sandwiches",
+                "sides": "snacks_sides",
+                "drinks": "drinks"
+            }
+            internal_cat = GROUP_MAP.get(detected_cat, detected_cat)
+            
             return jsonify({
                 "reply": "", 
                 "action": "open_category",
-                "category": detected_cat,
+                "category": internal_cat,
                 "lang": lang
             })
 
@@ -6431,10 +6440,20 @@ def chat():
         # Example: "burgers and meals" -> has "and" (multi=True), no digits, cat="burgers" -> Open Category
         # Example: "2 beef burgers" -> has digits -> Multi-Item
         if is_multi_item and not has_digits and detected_cat:
+             # Map to Group ID
+             GROUP_MAP = {
+                "burgers": "burgers_meals",
+                "meals": "burgers_meals",
+                "sandwiches": "sandwiches",
+                "sides": "snacks_sides",
+                "drinks": "drinks"
+             }
+             internal_cat = GROUP_MAP.get(detected_cat, detected_cat)
+
              return jsonify({
                 "reply": "", 
                 "action": "open_category",
-                "category": detected_cat,
+                "category": internal_cat,
                 "lang": lang
             })
             
@@ -6444,10 +6463,19 @@ def chat():
         else:
             # 3. Check for specific category (if not multi-item)
             if detected_cat:
+                GROUP_MAP = {
+                    "burgers": "burgers_meals",
+                    "meals": "burgers_meals",
+                    "sandwiches": "sandwiches",
+                    "sides": "snacks_sides",
+                    "drinks": "drinks"
+                }
+                internal_cat = GROUP_MAP.get(detected_cat, detected_cat)
+
                 return jsonify({
                     "reply": "", 
                     "action": "open_category",
-                    "category": detected_cat,
+                    "category": internal_cat,
                     "lang": lang
                 })
             # 3. Show Generic Menu
