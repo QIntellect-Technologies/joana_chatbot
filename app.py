@@ -6902,7 +6902,19 @@ def chat():
         s["pending_item"] = None
 
         # ✅ CRITICAL FIX: Actually ADD the item to the order!
-        if category == "burgers_meals":
+        
+        # 🌶️ SPICY CHECK: Only ask for these specific items
+        SPICY_ITEMS = {
+            "chicken burger", "beef burger", "crispy burger",
+            "chicken burger meal", "beef burger meal", "crispy burger meal"
+        }
+        
+        should_ask_spice = (
+            category == "burgers_meals" and 
+            pending.lower().strip() in SPICY_ITEMS
+        )
+
+        if should_ask_spice:
             # For burgers, queue for spice question - will be added after spice selection
             s["stage"] = "await_spice"
             session["state"] = s
@@ -6950,11 +6962,46 @@ def chat():
         if category != "burgers_meals":
             reply = "من فضلك اختر برجر صحيح من القائمة." if lang == "ar" else "Please choose a valid burger from the menu."
             return make_chat_response(reply, lang)
-        s["last_item"] = chosen
-        s["last_qty"] = qty
-        s["stage"] = "await_spice"
+        # 🌶️ SPICY CHECK: Only ask for these specific items
+        SPICY_ITEMS = {
+            "chicken burger", "beef burger", "crispy burger",
+            "chicken burger meal", "beef burger meal", "crispy burger meal"
+        }
+        
+        should_ask_spice = (
+            chosen.lower().strip() in SPICY_ITEMS
+        )
+
+        if should_ask_spice:
+            s["last_item"] = chosen
+            s["last_qty"] = qty
+            s["stage"] = "await_spice"
+            session["state"] = s
+            reply = (f"بالنسبة لـ {qty} {chosen}، هل تفضلها حارة أم بدون حار؟" if lang == "ar" else f"For your {qty} {chosen.title()}, would you like them spicy or non-spicy?")
+            return make_chat_response(reply, lang)
+        
+        # If not spicy item, add directly
+        s["order"].append({"item": chosen, "qty": qty, "spicy": 0, "nonspicy": 0, "price": price, "subtotal": qty * price})
+        s["last_confirmed_item"] = {"item": chosen, "qty": qty, "spicy": 0, "nonspicy": 0, "price": price}
+        s["last_item"] = None
+        s["last_qty"] = 0
+
+        # ✅ PROCEED TO NEXT IN GENERIC QUEUE
+        prompt = _start_next_generic_from_queue(s, MENU, lang)
+        if prompt:
+            session["state"] = s
+            return make_chat_response(prompt, lang)
+
+        s["stage"] = "add_more"
+        summary, total = build_order_summary_and_total(s["order"], lang)
+        s["total"] = total
         session["state"] = s
-        reply = (f"بالنسبة لـ {qty} {chosen}، هل تفضلها حارة أم بدون حار؟" if lang == "ar" else f"For your {qty} {chosen.title()}, would you like them spicy or non-spicy?")
+
+        reply = (
+            f"{chosen} ×{qty} تمت إضافته إلى طلبك.<br>هل ترغب في إضافة شيء آخر؟"
+            if lang == "ar"
+            else f"{chosen.title()} ×{qty} added to your order.<br>Would you like to add anything else?"
+        )
         return make_chat_response(reply, lang)
 
     # pick sandwich button
