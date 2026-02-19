@@ -1723,19 +1723,89 @@ def html_to_whatsapp(text: str) -> str:
     return text.strip()
 
 # =========================================================
-# GREETINGS
+# GREETINGS (ENHANCED - 100+ patterns)
 # =========================================================
 WA_GREETINGS = [
-    "hi", "hello", "hey", "salam", "slam", "asalam", "assalam",
-    "assalam o alaikum", "assalamu alaikum", "السلام عليكم", "مرحبا",
+    # Basic greetings
+    "hi", "hello", "hey", "hii", "hiii", "hiiii", "helo", "hallo", "hullo",
+    "hiya", "heya", "yo", "sup", "wassup", "whats up", "what's up", "whaddup",
+    "howdy", "greetings", "salutations",
+    # Time-based greetings
+    "good morning", "good afternoon", "good evening", "good night", "good day",
+    "morning", "afternoon", "evening", "gm", "gn",
+    # How are you variations
+    "how are you", "how r u", "how r you", "how are u", "how you doing",
+    "how are you doing", "how is it going", "hows it going", "how's it going",
+    "how you been", "how have you been", "how are things", "hows things",
+    "how do you do", "whats going on", "what's going on", "what is going on",
+    "hows your day", "how's your day", "hows life", "how's life",
+    "you good", "you ok", "everything good", "all good", "you alright",
+    "are you there", "anybody there", "anyone there", "you there",
+    "hru", "wru", "wyd",
+    # Salam variations
+    "salam", "slam", "asalam", "assalam", "assalam o alaikum", "assalamu alaikum",
+    # Arabic greetings
+    "السلام عليكم", "مرحبا", "أهلاً", "اهلا", "هلا", "هاي", "هاى", "السلام",
+    "اهلين", "هلا والله", "يا هلا", "مرحبتين", "الله بالخير",
+    "صباح الخير", "صباحك سكر", "مساء الخير", "مساء النور",
+    # Arabic how are you
+    "كيف حالك", "كيفك", "شلونك", "شخبارك", "عامل ايه", "كيف الحال",
+    "وش اخبارك", "ايش اخبارك", "شو اخبارك", "كيف صحتك", "عساك بخير",
 ]
 
 def is_wa_greeting(text: str) -> bool:
+    """Check if text is a greeting (hi, hello, how are you, etc.)"""
     if not text:
         return False
     t = text.strip().lower()
-    t = re.sub(r"[^\w\u0600-\u06FF ]+", "", t)
-    return t in WA_GREETINGS
+    t = re.sub(r"[^\w\u0600-\u06FF ]+", "", t).strip()
+    
+    # Exact match
+    if t in WA_GREETINGS:
+        return True
+    
+    # Check if starts with greeting
+    for greeting in WA_GREETINGS:
+        greeting_clean = re.sub(r"[^\w\u0600-\u06FF ]+", "", greeting).strip()
+        if t == greeting_clean or t.startswith(greeting_clean + " "):
+            return True
+    
+    return False
+
+
+# =========================================================
+# ORDER INTENT PATTERNS (for webhook detection)
+# =========================================================
+ORDER_INTENT_KEYWORDS = [
+    # "I want to order" variations
+    "i want to order", "i wanna order", "want to order", "wanna order",
+    "i want order", "i would like to order", "id like to order",
+    "i need to order", "need to order", "wish to order",
+    # "Can I order" variations  
+    "can i order", "can i order something", "could i order", "may i order",
+    "can i place an order", "can i make an order", "can i get an order",
+    # "Order" simple variations
+    "order", "order now", "order please", "order pls", "order plz",
+    "place order", "place an order", "make order", "start order",
+    "ready to order", "lets order", "let's order", "ordering",
+    # "I'm hungry" / "I need food" variations
+    "im hungry", "i am hungry", "hungry", "starving", "i need food",
+    "need food", "i want food", "want food", "something to eat",
+    # Arabic order intents
+    "أريد الطلب", "ابغى اطلب", "أبغى أطلب", "بدي اطلب", "اريد اطلب",
+    "ابغا اطلب", "ودي اطلب", "حابب اطلب", "عايز اطلب",
+    "طلب", "اطلب", "نطلب", "طلب جديد", "ممكن اطلب",
+]
+
+def is_order_intent(text: str) -> bool:
+    """Check if text indicates user wants to order"""
+    if not text:
+        return False
+    t = text.strip().lower()
+    for pattern in ORDER_INTENT_KEYWORDS:
+        if pattern in t:
+            return True
+    return False
 
 # =========================================================
 # BASIC UTILITIES
@@ -4838,7 +4908,12 @@ def whatsapp_webhook():
     if not from_button and is_first_interaction and user_text and len(user_text.strip()) > 2:
         # Quick check: has numbers or food-related words
         has_numbers = any(char.isdigit() for char in user_text)
-        common_greetings = ["hi", "hello", "hey", "salam", "مرحبا", "السلام"]
+        # Enhanced greeting detection - includes "how are you" variations
+        common_greetings = [
+            "hi", "hello", "hey", "hii", "hiii", "salam", "مرحبا", "السلام", "اهلا", "هلا",
+            "how are you", "how r u", "how are u", "how you doing", "hows it going",
+            "كيف حالك", "كيفك", "شلونك", "شخبارك"
+        ]
         is_likely_greeting = any(g in user_text.lower() for g in common_greetings)
         
         # Only use AI if it has numbers OR not a clear greeting
@@ -4959,6 +5034,34 @@ def whatsapp_webhook():
         
         send_whatsapp_text(user_number, rejection_msg)
         # Show category buttons to redirect
+        send_category_buttons(user_number, lang, show_image=True)
+        return "ok", 200
+    
+    # ✅ ORDER INTENT HANDLER - "I want to order", "can I order something", etc.
+    # This handles cases that were previously going to "Sorry, something went wrong"
+    if not from_button and is_order_intent(user_text) and not looks_like_order_or_menu(user_text):
+        print(f"✅ ORDER INTENT DETECTED: '{user_text}'")
+        
+        # Initialize session if needed
+        WHATSAPP_SESSIONS[user_number] = {
+            "state": {"stage": None, "order": [], "total": 0, "last_item": None, "last_qty": 0, 
+                     "last_confirmed_item": None, "pending_item": None, "spice_queue": [], "generic_queue": []},
+            "messages": [],
+            "lang": lang,
+        }
+        
+        # Show welcome message with menu categories
+        display_name = (wa_name or "").strip() or ("عميل" if lang == "ar" else "Customer")
+        welcome_msg = (
+            f"أهلاً *{display_name}*! 🎉\n\n"
+            "بالتأكيد، يمكنك الطلب الآن!\n"
+            "📋 اختر من القائمة:"
+            if lang == "ar" else
+            f"Hi *{display_name}*! 🎉\n\n"
+            "Of course, you can order now!\n"
+            "📋 Choose from our menu:"
+        )
+        send_whatsapp_text(user_number, welcome_msg)
         send_category_buttons(user_number, lang, show_image=True)
         return "ok", 200
     
@@ -6215,6 +6318,33 @@ def chat():
     if intent == "menu":
         reply = "Here’s our menu! Please place your order." if lang == "en" else "هذه قائمتنا! من فضلك ضع طلبك."
         return make_chat_response(reply, lang, menu="/static/menu.PNG")
+
+    # ✅ GREETING INTENT - Handle "hi", "how are you", etc.
+    if intent == "greeting":
+        greeting_reply = (
+            "أهلاً وسهلاً! 👋 أنا مساعدك الذكي في مطعم JOANA!\n\n"
+            "كيف يمكنني مساعدتك اليوم؟ 🍔\n"
+            "• اكتب 'menu' لعرض القائمة\n"
+            "• أو أخبرني ماذا تريد أن تطلب!"
+            if lang == "ar" else
+            "Hello! 👋 I'm your JOANA Fast Food assistant!\n\n"
+            "How can I help you today? 🍔\n"
+            "• Type 'menu' to see our menu\n"
+            "• Or tell me what you'd like to order!"
+        )
+        return make_chat_response(greeting_reply, lang)
+
+    # ✅ ORDER_START INTENT - Handle "I want to order", "can I order", etc.
+    if intent == "order_start":
+        order_start_reply = (
+            "بالتأكيد! يمكنك الطلب الآن! 🎉\n\n"
+            "📋 هذه قائمتنا! اختر ما تريد:"
+            if lang == "ar" else
+            "Of course! You can order now! 🎉\n\n"
+            "📋 Here's our menu! Choose what you'd like:"
+        )
+        return make_chat_response(order_start_reply, lang, menu="/static/menu.PNG")
+
 
 
     # =========================================================
