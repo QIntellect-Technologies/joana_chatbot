@@ -10,7 +10,7 @@ from zoneinfo import ZoneInfo
 
 import pandas as pd
 from flask import Flask, render_template, request, jsonify, session
-from nlp_utils import detect_intent, detect_language
+from nlp_utils import detect_intent, detect_language, detect_category_from_text
 from openai import OpenAI
 from dotenv import load_dotenv
 
@@ -5235,6 +5235,24 @@ def whatsapp_webhook():
             customer_id=customer_id,
         )
 
+        # ✅ Handle open_category action (from order_start intent)
+        if result.get("action") == "open_category":
+            cat = result.get("category")
+            # Map to internal keys
+            mapping = {
+                "burgers": "burgers_meals",
+                "meals": "burgers_meals", 
+                "sandwiches": "sandwiches",
+                "sides": "snacks_sides",
+                "drinks": "drinks",
+                "juices": "juices"
+            }
+            internal_cat = mapping.get(cat, cat)
+            
+            WA_CATEGORY_STATE[user_number] = {"category": internal_cat, "index": 0}
+            send_items_for_category(user_number, internal_cat, lang)
+            return "ok", 200
+
         reply_html = result.get("reply") or ("Sorry, something went wrong." if lang == "en" else "عذراً، حدث خطأ ما.")
         reply_text = html_to_whatsapp(reply_html)
         
@@ -6356,6 +6374,16 @@ def chat():
 
     # ✅ ORDER_START INTENT - Handle "I want to order", "can I order", etc.
     if intent == "order_start":
+        # Check if a specific category was mentioned
+        detected_cat = detect_category_from_text(msg)
+        if detected_cat:
+            return jsonify({
+                "reply": "", 
+                "action": "open_category",
+                "category": detected_cat,
+                "lang": lang
+            })
+
         order_start_reply = (
             "بالتأكيد! يمكنك الطلب الآن! 🎉\n\n"
             "📋 هذه قائمتنا! اختر ما تريد:"
