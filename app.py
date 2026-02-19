@@ -6511,7 +6511,7 @@ def chat():
             
         # Standard Multi-Item Check
         if is_multi_item:
-            pass # Fall through to multi-item handler
+            return handle_multi_item_text(msg_raw, s, MENU, lang)
         else:
             # 3. Check for specific category (if not multi-item)
             if detected_cat:
