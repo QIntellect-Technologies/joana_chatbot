@@ -1831,6 +1831,17 @@ def is_order_intent(text: str) -> bool:
 # =========================================================
 # BASIC UTILITIES
 # =========================================================
+def is_asking_for_categories(text: str) -> bool:
+    """Check if the user is asking for categories generally."""
+    if not text: return False
+    text_l = text.lower()
+    cat_keywords = [
+        "category", "categories", "sections", "groups", "types", 
+        "فئات", "أقسام", "فئة", "قسم", "انواع", "أصناف"
+    ]
+    return any(k in text_l for k in cat_keywords)
+
+
 def polite_check(text):
     bad = ["idiot", "stupid", "لعنة", "غبي"]
     return any(w in (text or "").lower() for w in bad)
@@ -5273,6 +5284,11 @@ def whatsapp_webhook():
             send_items_for_category(user_number, internal_cat, lang)
             return "ok", 200
 
+        # ✅ Handle show_categories_ui action
+        if result.get("action") == "show_categories_ui":
+            send_category_buttons(user_number, lang, show_image=True)
+            return "ok", 200
+
         reply_html = result.get("reply") or ("Sorry, something went wrong." if lang == "en" else "عذراً، حدث خطأ ما.")
         reply_text = html_to_whatsapp(reply_html)
         
@@ -6374,6 +6390,14 @@ def chat():
         )
 
     if intent == "menu" and not (from_button and msg_l.startswith("item_")):
+        # 0. Check if generically asking for categories (e.g. "show me categories")
+        if is_asking_for_categories(msg):
+             return jsonify({
+                "reply": "", 
+                "action": "show_categories_ui",
+                "lang": lang
+            })
+
         # 1. Check for specific category request (e.g. "Do you have drinks?")
         detected_cat = detect_category_from_text(msg)
         if detected_cat:
@@ -6434,6 +6458,14 @@ def chat():
         # but looks_like_multi_item_text partially handles that or we rely on digits.
         
         detected_cat = detect_category_from_text(msg)
+
+        # 1.5 Check if generically asking for categories as part of order_start
+        if not detected_cat and is_asking_for_categories(msg):
+            return jsonify({
+                "reply": "", 
+                "action": "show_categories_ui",
+                "lang": lang
+            })
 
         # 2. DECISION LOGIC
         # If it looks like multi-item BUT has no digits/quantities AND a category is detected -> Prefer Category
